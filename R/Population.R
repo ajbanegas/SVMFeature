@@ -4,14 +4,14 @@
 #'   This function defines the `Population` class with its attributes and methods.
 #'
 #' @param data Dataset
-#' @param costes Associated costs
-#' @param tam_pob Population size
+#' @param costs Associated costs
+#' @param pop_size Population size
 #' @param inputs Input variables
 #' @param output Output variable
 #' @param num_features Number of features
 #' @param num_obj Number of objective (default: 2)
 #' @param clones Number of clones (default: 0)
-#' @param p_mutacion Mutation probability (default: 0.7)
+#' @param p_mutation Mutation probability (default: 0.7)
 #' @param p_mut_ind Individual mutation probability (default: 0.4)
 #' @param p_mut_fea Feature mutation probability (default: 0.4)
 #' @param p_mut_coord Mutation coordinates (default: 0.2)
@@ -20,30 +20,30 @@
 #' @return Object of the `Population` class
 #'
 #' @export
-Population <- function(data, costes, tam_pob, inputs, output, num_features, num_obj = 2, clones = 0,
-                      p_mutacion = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
-  poblacion <- list(
+Population <- function(data, costs, pop_size, inputs, output, num_features, num_obj = 2, clones = 0,
+                      p_mutation = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
+  population <- list(
     num_features = num_features,
     inputs = inputs,
     output = output,
     num_dim = length(inputs),
     data = data,
-    costes = costes,
-    tam_pob = tam_pob,
+    costs = costs,
+    pop_size = pop_size,
     clones = clones,
-    lista_soluciones = list(),
+    solution_list = list(),
     num_fronts = NULL,
     num_sol_fron = NULL,
-    df_soluciones = NULL,
+    df_solutions = NULL,
     fronts = list(),
-    p_mutacion = p_mutacion,
+    p_mutation = p_mutation,
     p_mut_ind = p_mut_ind,
     p_mut_fea = p_mut_fea,
     p_mut_coord = p_mut_coord,
     mut_coord = mut_coord,
     num_obj = num_obj
   )
-  return(poblacion)
+  return(population)
 }
 
 
@@ -53,25 +53,25 @@ Population <- function(data, costes, tam_pob, inputs, output, num_features, num_
 #' @description
 #'   This function generates the initial population.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #'
 #' @return Population class object updated with the generated initial population
-generar_poblacion_inicial <- function(poblacion) {
-  cat(sprintf("Creating initial population of size %d\n", poblacion$tam_pob))
+generate_initial_population <- function(population) {
+  cat(sprintf("Creating initial population of size %d\n", population$pop_size))
   num_sol <- 0
 
-  while (length(poblacion$lista_soluciones) < poblacion$tam_pob) {
+  while (length(population$solution_list) < population$pop_size) {
     # Crear y generar solución aleatoria
-    sol <- Solution(num_sol, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
-    sol <- generar_solucion_aleatoria(sol)
-    sol <- evaluar_solucion(sol)
+    sol <- Solution(num_sol, population$data, population$costs, population$inputs, population$output, population$num_features)
+    sol <- generate_random_solution(sol)
+    sol <- evaluate_solution(sol)
 
     # Comprobar si la solución ha sido evaluada exitosamente
-    if (sol$evaluacion_exitosa) {
+    if (sol$successful_evaluation) {
       # Comprobación adicional para clones si necesario
-      if (poblacion$clones == 1 || comprobar_clones(poblacion, sol) == 0) {
+      if (population$clones == 1 || check_clones(population, sol) == 0) {
         # Añadir la solución evaluada y actualizada a la población
-        poblacion$lista_soluciones[[num_sol + 1]] <- sol
+        population$solution_list[[num_sol + 1]] <- sol
         num_sol <- num_sol + 1
       } else {
         cat("Detected and skipped clone.\n")
@@ -80,7 +80,7 @@ generar_poblacion_inicial <- function(poblacion) {
       cat("Disregarded invalid solution.\n")
     }
   }
-  return(poblacion)
+  return(population)
 }
 
 
@@ -90,32 +90,32 @@ generar_poblacion_inicial <- function(poblacion) {
 #' @description
 #'   This function prints the population.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #'
 #' @return Prints the population in the console
-imprimir_poblacion <- function(poblacion) {
+print_population <- function(population) {
   # Convertir lista de soluciones a data frame
-  df_soluciones <- do.call(rbind, lapply(poblacion$lista_soluciones, function(solucion) {
-    solucion_dict <- to_dict(solucion)
+  df_solutions <- do.call(rbind, lapply(population$solution_list, function(solution) {
+    solution_dict <- to_dict(solution)
     # Asegurarse de que todos los valores sean vectores y no listas
-    solucion_dict <- lapply(solucion_dict, function(item) if(is.list(item)) unlist(item) else item)
+    solution_dict <- lapply(solution_dict, function(item) if(is.list(item)) unlist(item) else item)
     # Convertir a dataframe
-    solucion_df <- as.data.frame(t(solucion_dict), stringsAsFactors = FALSE)
-    return(solucion_df)
+    solution_df <- as.data.frame(t(solution_dict), stringsAsFactors = FALSE)
+    return(solution_df)
   }))
 
   # Convertir las columnas necesarias a numérico
-  df_soluciones$FRONT <- as.numeric(as.character(df_soluciones$FRONT))
+  df_solutions$FRONT <- as.numeric(as.character(df_solutions$FRONT))
 
   # Verificar si la columna FRONT es numérica ahora
-  if(!is.numeric(df_soluciones$FRONT)) {
+  if(!is.numeric(df_solutions$FRONT)) {
     stop("FRONT column could not be converted to numeric.")
   }
 
   # Ordenar el dataframe por la columna 'FRONT'
-  df_soluciones <- df_soluciones[order(df_soluciones$FRONT), ]
+  df_solutions <- df_solutions[order(df_solutions$FRONT), ]
 
-  print(df_soluciones)
+  print(df_solutions)
 }
 
 
@@ -125,26 +125,26 @@ imprimir_poblacion <- function(poblacion) {
 #' @description
 #'   This function checks if a solution already exists in the solution list to avoid duplicates.
 #'
-#' @param poblacion Population
+#' @param population Population
 #' @param solucion_eva Solution object to be evaluated for duplication
 #'
 #' @return 1 if a clone is found, otherwise 0
-comprobar_clones <- function(poblacion, solucion_eva) {
-  clon <- 0
-  for (sol in poblacion$lista_soluciones) {
+check_clones <- function(population, solution_eva) {
+  clone <- 0
+  for (sol in population$solution_list) {
     # Comparar todas las características relevantes
-    if (all(sol$features == solucion_eva$features) &&
-        abs(sol$objetivo[[1]] - solucion_eva$objetivo[[1]]) < 1e-5 &&
-        abs(sol$objetivo[[2]] - solucion_eva$objetivo[[2]]) < 1e-5 &&
-        all(abs(sol$plano_coord - solucion_eva$plano_coord) < 1e-5) &&
-        identical(sol$vectors, solucion_eva$vectors)) {
-      clon <- 1
+    if (all(sol$features == solution_eva$features) &&
+        abs(sol$objective[[1]] - solution_eva$objective[[1]]) < 1e-5 &&
+        abs(sol$objective[[2]] - solution_eva$objective[[2]]) < 1e-5 &&
+        all(abs(sol$plane_coord - solution_eva$plane_coord) < 1e-5) &&
+        identical(sol$vectors, solution_eva$vectors)) {
+      clone <- 1
       break
     } else {
-      clon <- 0
+      clone <- 0
     }
   }
-  return(clon)
+  return(clone)
 }
 
 
@@ -154,65 +154,65 @@ comprobar_clones <- function(poblacion, solucion_eva) {
 #' @description
 #'   This function performs the Fast Non-Dominated Sorting on a given population.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #'
 #' @return Updated Population class object with sorted fronts
-fnds <- function(poblacion) {
-  tam_pob <- length(poblacion$lista_soluciones)
+fnds <- function(population) {
+  pop_size <- length(population$solution_list)
   fronts <- list()
-  front <- list(soluciones = numeric())
+  front <- list(solutions = numeric())
   # Inicializar soluciones
-  for (i in 1:tam_pob) {
-    poblacion$lista_soluciones[[i]]$sol_dom_por <- 0
-    poblacion$lista_soluciones[[i]]$lista_domina_a <- list()
-    poblacion$lista_soluciones[[i]]$lista_dominado_por <- list()
-    poblacion$lista_soluciones[[i]]$front <- -1
+  for (i in 1:pop_size) {
+    population$solution_list[[i]]$sol_dom_by <- 0
+    population$solution_list[[i]]$dominates_list <- list()
+    population$solution_list[[i]]$list_dominated_by <- list()
+    population$solution_list[[i]]$front <- -1
   }
 
   # Calcular dominancia
-  for (n in 1:(tam_pob - 1)) {
-    for (s in (n + 1):tam_pob) {
-      if (dominar(poblacion$lista_soluciones[[n]], poblacion$lista_soluciones[[s]])) {
-        poblacion$lista_soluciones[[n]]$lista_domina_a <- unique(c(poblacion$lista_soluciones[[n]]$lista_domina_a, s))
-        poblacion$lista_soluciones[[s]]$lista_dominado_por <- unique(c(poblacion$lista_soluciones[[s]]$lista_dominado_por, n))
-        poblacion$lista_soluciones[[s]]$sol_dom_por <- poblacion$lista_soluciones[[s]]$sol_dom_por + 1
-      } else if (dominar(poblacion$lista_soluciones[[s]], poblacion$lista_soluciones[[n]])) {
-        poblacion$lista_soluciones[[s]]$lista_domina_a <- unique(c(poblacion$lista_soluciones[[s]]$lista_domina_a, n))
-        poblacion$lista_soluciones[[n]]$lista_dominado_por <- unique(c(poblacion$lista_soluciones[[n]]$lista_dominado_por, s))
-        poblacion$lista_soluciones[[n]]$sol_dom_por <- poblacion$lista_soluciones[[n]]$sol_dom_por + 1
+  for (n in 1:(pop_size - 1)) {
+    for (s in (n + 1):pop_size) {
+      if (dominate(population$solution_list[[n]], population$solution_list[[s]])) {
+        population$solution_list[[n]]$dominates_list <- unique(c(population$solution_list[[n]]$dominates_list, s))
+        population$solution_list[[s]]$list_dominated_by <- unique(c(population$solution_list[[s]]$list_dominated_by, n))
+        population$solution_list[[s]]$sol_dom_by <- population$solution_list[[s]]$sol_dom_by + 1
+      } else if (dominate(population$solution_list[[s]], population$solution_list[[n]])) {
+        population$solution_list[[s]]$dominates_list <- unique(c(population$solution_list[[s]]$dominates_list, n))
+        population$solution_list[[n]]$list_dominated_by <- unique(c(population$solution_list[[n]]$list_dominated_by, s))
+        population$solution_list[[n]]$sol_dom_by <- population$solution_list[[n]]$sol_dom_by + 1
       }
     }
   }
   # Asignar frente 1 a las soluciones no dominadas
-  for (i in 1:tam_pob) {
-    if (poblacion$lista_soluciones[[i]]$sol_dom_por == 0) {
-      front$soluciones <- c(front$soluciones, i)
-      poblacion$lista_soluciones[[i]]$front <- 1
+  for (i in 1:pop_size) {
+    if (population$solution_list[[i]]$sol_dom_by == 0) {
+      front$solutions <- c(front$solutions, i)
+      population$solution_list[[i]]$front <- 1
     }
   }
   fronts[[1]] <- front
 
   # Crear frentes subsiguientes
   r <- 1
-  while (length(fronts[[r]]$soluciones) > 0) {
-    nuevo_frente <- numeric()
-    for (sol_num in fronts[[r]]$soluciones) {
-      dominados <- poblacion$lista_soluciones[[sol_num]]$lista_domina_a
-      for (i in dominados) {
-        poblacion$lista_soluciones[[i]]$sol_dom_por <- poblacion$lista_soluciones[[i]]$sol_dom_por - 1
-        if (poblacion$lista_soluciones[[i]]$sol_dom_por == 0) {
-          nuevo_frente <- c(nuevo_frente, i)
-          poblacion$lista_soluciones[[i]]$front <- r + 1
+  while (length(fronts[[r]]$solutions) > 0) {
+    new_front <- numeric()
+    for (sol_num in fronts[[r]]$solutions) {
+      dominated <- population$solution_list[[sol_num]]$dominates_list
+      for (i in dominated) {
+        population$solution_list[[i]]$sol_dom_by <- population$solution_list[[i]]$sol_dom_by - 1
+        if (population$solution_list[[i]]$sol_dom_by == 0) {
+          new_front <- c(new_front, i)
+          population$solution_list[[i]]$front <- r + 1
         }
       }
     }
     r <- r + 1
-    front <- list(soluciones = nuevo_frente)
+    front <- list(solutions = new_front)
     fronts[[r]] <- front
   }
 
-  poblacion$fronts <- fronts
-  return(poblacion)
+  population$fronts <- fronts
+  return(population)
 }
 
 
@@ -222,25 +222,25 @@ fnds <- function(poblacion) {
 #' @description
 #'   This function selects a parent solution from the population using tournament selection.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #'
 #' @return Selected parent solution
-torneo_elegir_padre <- function(poblacion) {
+tournament_select_parent <- function(population) {
   # Seleccionar dos candidatos al azar
-  num1 <- sample(seq_len(length(poblacion$lista_soluciones)), 1)
-  num2 <- sample(seq_len(length(poblacion$lista_soluciones)), 1)
+  num1 <- sample(seq_len(length(population$solution_list)), 1)
+  num2 <- sample(seq_len(length(population$solution_list)), 1)
 
   # Asegurarse de que no sean el mismo candidato
   while (num1 == num2) {
-    num2 <- sample(seq_len(length(poblacion$lista_soluciones)), 1)
+    num2 <- sample(seq_len(length(population$solution_list)), 1)
   }
 
   # Extraer los candidatos directamente
-  padre1 <- poblacion$lista_soluciones[[num1]]
-  padre2 <- poblacion$lista_soluciones[[num2]]
+  parent1 <- population$solution_list[[num1]]
+  parent2 <- population$solution_list[[num2]]
 
   # Comparar los dos padres y devolver el "mejor"
-  return(comparar_soluciones(padre1, padre2))
+  return(compare_solutions(parent1, parent2))
 }
 
 
@@ -250,67 +250,67 @@ torneo_elegir_padre <- function(poblacion) {
 #' @description
 #'   This function performs crossover between two parent solutions to create offspring.
 #'
-#' @param poblacion Population class object
-#' @param padre First parent solution
-#' @param madre Second parent solution
+#' @param population Population class object
+#' @param parent First parent solution
+#' @param mother Second parent solution
 #' @param num Unique identifier for the new solutions
 #'
 #' @return List of two new offspring solutions
-cruzar_soluciones <- function(poblacion, padre, madre, num) {
+crossover_solutions <- function(population, parent, mother, num) {
   # Crear 4 hijos (soluciones)
-  hijo <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
-  hijo$features <- padre$features
-  hijo$plano_coord <- padre$plano_coord
-  hijo$vectors <- list(padre$vectors[[1]], madre$vectors[[2]])
+  child <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child$features <- parent$features
+  child$plane_coord <- parent$plane_coord
+  child$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  hijo1 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
-  hijo1$features <- madre$features
-  hijo1$plano_coord <- madre$plano_coord
-  hijo1$vectors <- list(padre$vectors[[1]], madre$vectors[[2]])
+  child1 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child1$features <- mother$features
+  child1$plane_coord <- mother$plane_coord
+  child1$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  hijo2 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
-  hijo2$features <- padre$features
-  hijo2$plano_coord <- padre$plano_coord
-  hijo2$vectors <- list(madre$vectors[[1]], padre$vectors[[2]])
+  child2 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child2$features <- parent$features
+  child2$plane_coord <- parent$plane_coord
+  child2$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
-  hijo3 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
-  hijo3$features <- madre$features
-  hijo3$plano_coord <- madre$plano_coord
-  hijo3$vectors <- list(madre$vectors[[1]], padre$vectors[[2]])
+  child3 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child3$features <- mother$features
+  child3$plane_coord <- mother$plane_coord
+  child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
   # Evaluar las soluciones
-  hijo <- evaluar_solucion(hijo)
-  hijo1 <- evaluar_solucion(hijo1)
-  hijo2 <- evaluar_solucion(hijo2)
-  hijo3 <- evaluar_solucion(hijo3)
+  child <- evaluate_solution(child)
+  child1 <- evaluate_solution(child1)
+  child2 <- evaluate_solution(child2)
+  child3 <- evaluate_solution(child3)
 
   # Comparar soluciones y determinar el ganador y el perdedor
-  domina <- dominar2(hijo, hijo1)
-  hijo_perdedor <- hijo
+  domina <- dominate2(child, child1)
+  losing_child <- child
   if (domina == 1) {
-    hijo_perdedor <- hijo1
+    losing_child <- child1
   } else if (domina == 0 && runif(1) < 0.5) {
-    hijo_perdedor <- hijo1
+    losing_child <- child1
   }
 
-  domina <- dominar2(hijo2, hijo3)
-  hijo_ganador <- hijo2
-  if (domina == 2) {
-    hijo_ganador <- hijo3
-  } else if (domina == 0 && runif(1) < 0.5) {
-    hijo_ganador <- hijo3
+  dominates <- dominate2(child2, child3)
+  winning_child <- child2
+  if (dominates == 2) {
+    winning_child <- child3
+  } else if (dominates == 0 && runif(1) < 0.5) {
+    winning_child <- child3
   }
 
   # Actualizar el perdedor con los atributos del ganador
-  hijo_perdedor$features <- hijo_ganador$features
-  hijo_perdedor$plano_coord <- hijo_ganador$plano_coord
-  hijo_perdedor$vectors[[1]] <- hijo_ganador$vectors[[1]]
-  hijo_perdedor$vectors[[2]] <- hijo_ganador$vectors[[2]]
+  losing_child$features <- winning_child$features
+  losing_child$plane_coord <- winning_child$plane_coord
+  losing_child$vectors[[1]] <- winning_child$vectors[[1]]
+  losing_child$vectors[[2]] <- winning_child$vectors[[2]]
 
-  hijo_perdedor$num <- num
-  hijo_ganador$num <- num + 1
+  losing_child$num <- num
+  winning_child$num <- num + 1
 
-  return(list(hijo_perdedor, hijo_ganador))
+  return(list(losing_child, winning_child))
 }
 
 
@@ -320,47 +320,47 @@ cruzar_soluciones <- function(poblacion, padre, madre, num) {
 #' @description
 #'   This function creates a new population through crossover.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #'
 #' @return Updated Population class object with the new population generated
-nueva_poblacion <- function(poblacion) {
-  cat(sprintf("Creating new population by crossover from %d to %d....\n", poblacion$tam_pob, 2 * poblacion$tam_pob))
-  i <- poblacion$tam_pob
+new_population <- function(population) {
+  cat(sprintf("Creating new population by crossover from %d to %d....\n", population$pop_size, 2 * population$pop_size))
+  i <- population$pop_size
 
-  while (length(poblacion$lista_soluciones) < 2 * poblacion$tam_pob) {
-    padre <- torneo_elegir_padre(poblacion)
-    madre <- torneo_elegir_padre(poblacion)
-    while (padre$num == madre$num) {
-      madre <- torneo_elegir_padre(poblacion)
+  while (length(population$solution_list) < 2 * population$pop_size) {
+    parent <- tournament_select_parent(population)
+    mother <- tournament_select_parent(population)
+    while (parent$num == mother$num) {
+      mother <- tournament_select_parent(population)
     }
 
-    hijos <- cruzar_soluciones(poblacion, padre, madre, i)
-    for (hijo in hijos) {
-      if (length(poblacion$lista_soluciones) >= 2 * poblacion$tam_pob) {
+    offspring <- crossover_solutions(population, parent, mother, i)
+    for (child in offspring) {
+      if (length(population$solution_list) >= 2 * population$pop_size) {
         break  # Evitar agregar más hijos si se alcanza el tamaño máximo
       }
 
-      if (runif(1) < poblacion$p_mutacion) {
-        hijo <- mutar_solucion(hijo, poblacion)
+      if (runif(1) < population$p_mutation) {
+        child <- mutate_solution(child, population)
       }
 
-      hijo <- evaluar_solucion(hijo)
-      while (!hijo$evaluacion_exitosa) {
-        hijo <- generar_solucion_aleatoria(hijo)
-        hijo <- evaluar_solucion(hijo)
+      child <- evaluate_solution(child)
+      while (!child$successful_evaluation) {
+        child <- generate_random_solution(child)
+        child <- evaluate_solution(child)
       }
 
-      while (comprobar_clones(poblacion, hijo) == 1) {
-        hijo <- mutar_solucion(hijo, poblacion)
-        hijo <- evaluar_solucion(hijo)
+      while (check_clones(population, child) == 1) {
+        child <- mutate_solution(child, population)
+        child <- evaluate_solution(child)
       }
 
-      poblacion$lista_soluciones[[length(poblacion$lista_soluciones) + 1]] <- hijo
+      population$solution_list[[length(population$solution_list) + 1]] <- child
       i <- i + 1
     }
   }
 
-  return(poblacion)
+  return(population)
 }
 
 
@@ -370,55 +370,55 @@ nueva_poblacion <- function(poblacion) {
 #' @description
 #'   This function mutates a solution based on mutation probabilities and coordinates.
 #'
-#' @param solucion Solution object to mutate
-#' @param poblacion Population class object that contains mutation parameters
+#' @param solution Solution object to mutate
+#' @param population Population class object that contains mutation parameters
 #'
 #' @return Mutated solution object
-mutar_solucion <- function(solucion, poblacion) {
+mutate_solution <- function(solution, population) {
   random <- runif(1)
 
   # Mutación de vectores
-  if (random < poblacion$p_mut_ind) {
-    solucion <- mutar_vectores(solucion)
+  if (random < population$p_mut_ind) {
+    solution <- mutate_vectors(solution)
   }
 
   # Mutación de características
-  if (poblacion$num_dim > poblacion$num_features) {
-    for (i in seq_along(solucion$features)) {
-      aleatorio <- runif(1)
-      if (aleatorio < poblacion$p_mut_fea) {
-        features_posibles <- setdiff(poblacion$inputs, solucion$features)
-        solucion$features[i] <- sample(features_posibles, 1)
-        solucion$plano_coord[i] <- runif(1, -1, 1)
+  if (population$num_dim > population$num_features) {
+    for (i in seq_along(solution$features)) {
+      rand_val <- runif(1)
+      if (rand_val < population$p_mut_fea) {
+        possible_features <- setdiff(population$inputs, solution$features)
+        solution$features[i] <- sample(possible_features, 1)
+        solution$plane_coord[i] <- runif(1, -1, 1)
       }
     }
   }
 
   # Mutación de planos
-  for (i in seq_along(solucion$plano_coord)) {
-    aleatorio <- runif(1)
-    if (aleatorio < poblacion$p_mut_coord) {
-      if (poblacion$mut_coord == 0) {
-        porcentaje <- runif(1, 0, 0.25)
-        aleatorio2 <- runif(1)
-        if (aleatorio2 < 0.5) {  # incrementa
-          solucion$plano_coord[i] <- solucion$plano_coord[i] * (1 + porcentaje)
-          if (solucion$plano_coord[i] > 1) {
-            solucion$plano_coord[i] <- solucion$plano_coord[i] / 10
+  for (i in seq_along(solution$plane_coord)) {
+    rand_val <- runif(1)
+    if (rand_val < population$p_mut_coord) {
+      if (population$mut_coord == 0) {
+        percentage <- runif(1, 0, 0.25)
+        rand_direction <- runif(1)
+        if (rand_direction < 0.5) {  # incrementa
+          solution$plane_coord[i] <- solution$plane_coord[i] * (1 + percentage)
+          if (solution$plane_coord[i] > 1) {
+            solution$plane_coord[i] <- solution$plane_coord[i] / 10
           }
         } else {  # decrementa
-          solucion$plano_coord[i] <- solucion$plano_coord[i] * (1 - porcentaje)
-          if (solucion$plano_coord[i] < -1) {
-            solucion$plano_coord[i] <- solucion$plano_coord[i] / 10
+          solution$plane_coord[i] <- solution$plane_coord[i] * (1 - percentage)
+          if (solution$plane_coord[i] < -1) {
+            solution$plane_coord[i] <- solution$plane_coord[i] / 10
           }
         }
       } else {
-        solucion$plano_coord[i] <- runif(1, -1, 1)
+        solution$plane_coord[i] <- runif(1, -1, 1)
       }
     }
   }
 
-  return(solucion)
+  return(solution)
 }
 
 
@@ -428,50 +428,50 @@ mutar_solucion <- function(solucion, poblacion) {
 #' @description
 #'   This function reduces the population size based on fronts and crowding distance.
 #'
-#' @param poblacion Population class object to reduce
+#' @param population Population class object to reduce
 #'
 #' @return Reduced Population class object
-reducir_poblacion <- function(poblacion) {
+reduce_population <- function(population) {
   cat("Size reduction from 2N to N....\n")
 
   # Crear nueva población vacía
-  nueva_poblacion <- list(
-    data = poblacion$data,
-    costes = poblacion$costes,
-    tam_pob = poblacion$tam_pob,
-    inputs = poblacion$inputs,
-    output = poblacion$output,
-    num_features = poblacion$num_features,
-    lista_soluciones = list()
+  new_population <- list(
+    data = population$data,
+    costs = population$costs,
+    pop_size = population$pop_size,
+    inputs = population$inputs,
+    output = population$output,
+    num_features = population$num_features,
+    solution_list = list()
   )
 
   # Contador de frentes
-  cont_front <- 1
+  front_counter <- 1
 
   # Añadir soluciones de los frentes a la nueva población hasta completar el tamaño
-  while (length(nueva_poblacion$lista_soluciones) + length(poblacion$fronts[[cont_front]]$soluciones) <= poblacion$tam_pob) {
-    soluciones_front <- lapply(poblacion$lista_soluciones, function(sol) {
-      if (sol$front == cont_front) return(sol) else return(NULL)
+  while (length(new_population$solution_list) + length(population$fronts[[front_counter]]$solutions) <= population$pop_size) {
+    front_solutions <- lapply(population$solution_list, function(sol) {
+      if (sol$front == front_counter) return(sol) else return(NULL)
     })
-    soluciones_front <- soluciones_front[!sapply(soluciones_front, is.null)]
-    nueva_poblacion$lista_soluciones <- c(nueva_poblacion$lista_soluciones, soluciones_front)
-    cat(sprintf("FRONT %d: %d solutions\n", cont_front, length(nueva_poblacion$lista_soluciones)))
-    cont_front <- cont_front + 1
+    front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
+    new_population$solution_list <- c(new_population$solution_list, front_solutions)
+    cat(sprintf("FRONT %d: %d solutions\n", front_counter, length(new_population$solution_list)))
+    front_counter <- front_counter + 1
   }
 
   # Si no se ha completado la población, seleccionar las mejores soluciones restantes usando crowding distance
-  if (length(nueva_poblacion$lista_soluciones) < poblacion$tam_pob && cont_front <= length(poblacion$fronts)) {
-    soluciones_front <- crowding_distance(poblacion, cont_front)
-    faltantes <- poblacion$tam_pob - length(nueva_poblacion$lista_soluciones)
-    nueva_poblacion$lista_soluciones <- c(nueva_poblacion$lista_soluciones, soluciones_front[1:faltantes])
+  if (length(new_population$solution_list) < population$pop_size && front_counter <= length(population$fronts)) {
+    front_solutions <- crowding_distance(population, front_counter)
+    remaining <- population$pop_size - length(new_population$solution_list)
+    new_population$solution_list <- c(new_population$solution_list, front_solutions[1:remaining])
   }
 
   # Renombrar las soluciones
-  for (i in seq_along(nueva_poblacion$lista_soluciones)) {
-    nueva_poblacion$lista_soluciones[[i]]$num <- i - 1
+  for (i in seq_along(new_population$solution_list)) {
+    new_population$solution_list[[i]]$num <- i - 1
   }
 
-  return(nueva_poblacion)
+  return(new_population)
 }
 
 
@@ -481,48 +481,48 @@ reducir_poblacion <- function(poblacion) {
 #' @description
 #'   This function calculates the crowding distance for solutions in a specified front.
 #'
-#' @param poblacion Population class object
+#' @param population Population class object
 #' @param num_front The front number to calculate the crowding distance for
 #'
 #' @return List of solutions with updated crowding distances
-crowding_distance <- function(poblacion, num_front) {
+crowding_distance <- function(population, num_front) {
   # Extraer soluciones del frente especificado
-  soluciones_front <- lapply(poblacion$lista_soluciones, function(sol) {
+  front_solutions <- lapply(population$solution_list, function(sol) {
     if (sol$front == num_front) return(sol) else return(NULL)
   })
-  soluciones_front <- soluciones_front[!sapply(soluciones_front, is.null)]
+  front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
 
-  num_sol_front <- length(soluciones_front)
+  num_sol_front <- length(front_solutions)
 
   # Inicializar la distancia de hacinamiento a cero para todas las soluciones
-  for (sol in soluciones_front) {
+  for (sol in front_solutions) {
     sol$crowding_distance <- 0
   }
 
-  # Procesar cada objetivo si hay suficientes soluciones para comparar
+  # Procesar cada objective si hay suficientes soluciones para comparar
   if (num_sol_front > 2) {
-    for (obj in 1:poblacion$num_obj) {
-      # Ordenar las soluciones basándose en el objetivo actual
-      soluciones_front <- soluciones_front[order(sapply(soluciones_front, function(x) x$objetivo[[obj]]))]
+    for (obj in 1:population$num_obj) {
+      # Ordenar las soluciones basándose en el objective actual
+      front_solutions <- front_solutions[order(sapply(front_solutions, function(x) x$objective[[obj]]))]
 
       # Asignar la distancia de hacinamiento infinita a las soluciones extremas
-      soluciones_front[[1]]$crowding_distance <- Inf
-      soluciones_front[[num_sol_front]]$crowding_distance <- Inf
+      front_solutions[[1]]$crowding_distance <- Inf
+      front_solutions[[num_sol_front]]$crowding_distance <- Inf
 
-      max_obj <- soluciones_front[[num_sol_front]]$objetivo[[obj]]
-      min_obj <- soluciones_front[[1]]$objetivo[[obj]]
+      max_obj <- front_solutions[[num_sol_front]]$objective[[obj]]
+      min_obj <- front_solutions[[1]]$objective[[obj]]
 
       if (max_obj > min_obj) {
         for (j in 2:(num_sol_front - 1)) {
-          incremento <- (soluciones_front[[j + 1]]$objetivo[[obj]] - soluciones_front[[j - 1]]$objetivo[[obj]]) / (max_obj - min_obj)
-          soluciones_front[[j]]$crowding_distance <- soluciones_front[[j]]$crowding_distance + incremento
+          increment <- (front_solutions[[j + 1]]$objective[[obj]] - front_solutions[[j - 1]]$objective[[obj]]) / (max_obj - min_obj)
+          front_solutions[[j]]$crowding_distance <- front_solutions[[j]]$crowding_distance + increment
         }
       }
     }
   }
 
   # Ordenar las soluciones por la distancia de hacinamiento de mayor a menor
-  soluciones_front <- soluciones_front[order(sapply(soluciones_front, function(x) x$crowding_distance), decreasing = TRUE)]
+  front_solutions <- front_solutions[order(sapply(front_solutions, function(x) x$crowding_distance), decreasing = TRUE)]
 
-  return(soluciones_front)
+  return(front_solutions)
 }
