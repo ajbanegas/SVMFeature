@@ -30,13 +30,13 @@ library(ggplot2)
 #' num_fea <- 2
 #  n_iter <- 10  # Número de iteraciones
 #  tiempo_max <- 300  # Tiempo máximo en segundos
-#  modo <- "tiempo"  # Modo de ejecución: "iteraciones" o "tiempo"
+#  modo <- "time"  # Modo de ejecución: "iters" o "time"
 #' svm_feature <- SVMFeature$new(archivo, inputs, output, costes, tam_pob, num_fea, n_iter, tiempo_max, modo)
 #' svm_feature$run()
 SVMFeature <- setRefClass(
   "SVMFeature",
   fields = list(
-    archivo = "character",
+    datos = "ANY",
     inputs = "character",
     output = "character",
     costes = "numeric",
@@ -48,11 +48,10 @@ SVMFeature <- setRefClass(
     poblacion = "ANY",
     mejor_poblacion = "ANY"
   ),
-
   methods = list(
     #' Initialize the SVMFeature object
     #'
-    #' @param archivo Character. The file path of the input data.
+    #' @param datos DataFrame. The input data.
     #' @param inputs Character vector. The names of the input features.
     #' @param output Character. The name of the output variable.
     #' @param costes Numeric vector. The costs associated with the features.
@@ -60,8 +59,8 @@ SVMFeature <- setRefClass(
     #' @param num_fea Numeric. The number of features.
     #' @param n_iter Numeric. The number of iterations.
     #' @return An initialized SVMFeature object.
-    initialize = function(archivo, inputs, output, costes, tam_pob, num_fea, n_iter = 10, tiempo_max = 300, modo = "iteraciones") {
-      .self$archivo <- archivo
+    initialize = function(datos, inputs, output, costes, tam_pob, num_fea, n_iter = 10, tiempo_max = 300, modo = "iters") {
+      .self$datos <- datos
       .self$inputs <- inputs
       .self$output <- output
       .self$costes <- costes
@@ -70,17 +69,6 @@ SVMFeature <- setRefClass(
       .self$n_iter <- n_iter
       .self$tiempo_max <- tiempo_max
       .self$modo <- modo
-
-      # TODO pasar el dataframe como parámetro de entrada
-      datos <- read.table(.self$archivo, sep = "\t", header = TRUE)
-
-      # TODO quitar la imputación de valores
-      # Imputar valores faltantes con la media de la columna
-      #for (col in names(datos)) {
-      #  if (any(is.na(datos[[col]]))) {
-      #    datos[[col]][is.na(datos[[col]])] <- mean(datos[[col]], na.rm = TRUE)
-      #  }
-      #}
 
       # Normalización de los datos
       scaler <- function(x) {
@@ -92,8 +80,8 @@ SVMFeature <- setRefClass(
         }
       }
 
-      datos_norm <- as.data.frame(lapply(datos[, inputs], scaler))
-      datos_norm[output] <- datos[[output]]
+      datos_norm <- as.data.frame(lapply(.self$datos[, inputs], scaler))
+      datos_norm[output] <- .self$datos[[output]]
 
       # Depuramos los datos cargados
       cat("Normalized data:\n")
@@ -135,20 +123,20 @@ SVMFeature <- setRefClass(
         }
       }
 
-      if (.self$modo == "iteraciones") {
+      if (.self$modo == "iters") {
         iter <- 0
         while (iter < .self$n_iter) {
           cat(sprintf("ITERATION %d: %f\n", iter, as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
           ejecutar_iteracion()
           iter <- iter + 1
         }
-      } else if (.self$modo == "tiempo") {
+      } else if (.self$modo == "time") {
         while (as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs")) < .self$tiempo_max) {
           cat(sprintf("TIME: %f\n", as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
           ejecutar_iteracion()
         }
       } else {
-        stop("Invalid execution mode. Usage: 'iteraciones' or 'tiempo'.")
+        stop("Invalid execution mode. Usage: 'iters' or 'time'.")
       }
 
       imprimir_poblacion(.self$mejor_poblacion)
@@ -169,7 +157,7 @@ SVMFeature <- setRefClass(
           geom_point(color = 'blue') +
           labs(x = 'Distance', y = 'Epsilon', title = 'Solutions in Front 1') +
           theme_minimal() +
-          theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray"))
+          theme(panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
 
         print(plot)
       }
