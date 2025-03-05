@@ -6,17 +6,15 @@
 \alias{SVMFeature}
 \title{SVMFeature Class}
 \arguments{
-\item{archivo}{Character. The file path of the input data.}
-
-\item{datos}{DataFrame. The input data.}
+\item{data}{DataFrame. The input data.}
 
 \item{inputs}{Character vector. The names of the input features.}
 
 \item{output}{Character. The name of the output variable.}
 
-\item{costes}{Numeric vector. The costs associated with the features.}
+\item{costs}{Numeric vector. The costs associated with the features.}
 
-\item{tam_pob}{Numeric. The population size.}
+\item{pop_size}{Numeric. The population size.}
 
 \item{num_fea}{Numeric. The number of features.}
 
@@ -36,13 +34,13 @@ It initializes with user-provided data, runs the optimization process, and print
 }
 
 \examples{
-archivo <- "data/prueba.txt"
+data <- read.table("data/prueba.txt", sep = ";", header = TRUE)
 inputs <- c('x1', 'x2', 'x3')
 output <- 'y'
-costes <- c(5, 27, 10)
-tam_pob <- 10
+costs <- c(5, 27, 10)
+pop_size <- 10
 num_fea <- 2
-svm_feature <- SVMFeature$new(archivo, inputs, output, costes, tam_pob, num_fea, n_iter, tiempo_max, modo)
+svm_feature <- SVMFeature$new(archivo, inputs, output, costs, pop_size, num_fea, n_iter, max_time, mode)
 svm_feature$run()
 Initialize the SVMFeature object
 

@@ -4,10 +4,10 @@
 \alias{to_dict}
 \title{Method to convert the solution to a dictionary}
 \usage{
-to_dict(solucion)
+to_dict(solution)
 }
 \arguments{
-\item{solucion}{Solution class object}
+\item{solution}{Solution class object}
 }
 \value{
 List with the information of the solution

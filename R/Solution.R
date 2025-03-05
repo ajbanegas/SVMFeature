@@ -29,7 +29,7 @@ Solution <- function(num, data, costs, inputs, output, num_features) {
     plane_coord = list(),
     plane_term_b = list(),
     objective = numeric(2),  # Index 1 para distancia, Index 2 para epsilon
-    sol_dom_por = 0,  # Inicializar contador de dominación
+    sol_dom_by = 0,  # Inicializar contador de dominación
     dominates_list = list(),  # Lista de soluciones que esta solución domina
     list_dominated_by = list(),  # Lista de soluciones que dominan a esta solución
     front = -1,
@@ -61,9 +61,9 @@ to_dict <- function(solution) {
     # COSTE = solution$obj_coste,  # Descomentar si obj_coste es utilizado
     # MC+ = solution$obj_mal_clasificados$mc_pos,  # Descomentar si se utiliza
     # MC- = solution$obj_mal_clasificados$mc_neg,  # Descomentar si se utiliza
-    DOMINA_A = solution$dominates_list,
-    DOMINADO_POR = solution$list_dominated_by,
-    SOL_DOM_POR = solution$sol_dom_por,
+    DOMINATES_TO = solution$dominates_list,
+    DOMINATED_BY = solution$list_dominated_by,
+    SOL_DOM_BY = solution$sol_dom_by,
     FRONT = solution$front,
     CROW_DIST = solution$crowding_distance
   ))

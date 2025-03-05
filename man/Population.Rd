@@ -6,14 +6,14 @@
 \usage{
 Population(
   data,
-  costes,
-  tam_pob,
+  costs,
+  pop_size,
   inputs,
   output,
   num_features,
   num_obj = 2,
   clones = 0,
-  p_mutacion = 0.7,
+  p_mutation = 0.7,
   p_mut_ind = 0.4,
   p_mut_fea = 0.4,
   p_mut_coord = 0.2,
@@ -23,9 +23,9 @@ Population(
 \arguments{
 \item{data}{Dataset}
 
-\item{costes}{Associated costs}
+\item{costs}{Associated costs}
 
-\item{tam_pob}{Population size}
+\item{pop_size}{Population size}
 
 \item{inputs}{Input variables}
 
@@ -37,7 +37,7 @@ Population(
 
 \item{clones}{Number of clones (default: 0)}
 
-\item{p_mutacion}{Mutation probability (default: 0.7)}
+\item{p_mutation}{Mutation probability (default: 0.7)}
 
 \item{p_mut_ind}{Individual mutation probability (default: 0.4)}
 

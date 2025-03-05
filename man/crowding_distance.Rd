@@ -4,10 +4,10 @@
 \alias{crowding_distance}
 \title{Crowding Distance Calculation}
 \usage{
-crowding_distance(poblacion, num_front)
+crowding_distance(population, num_front)
 }
 \arguments{
-\item{poblacion}{Population class object}
+\item{population}{Population class object}
 
 \item{num_front}{The front number to calculate the crowding distance for}
 }

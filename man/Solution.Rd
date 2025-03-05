@@ -4,14 +4,14 @@
 \alias{Solution}
 \title{Definition of the Solution Class}
 \usage{
-Solution(num, data, costes, inputs, output, num_features)
+Solution(num, data, costs, inputs, output, num_features)
 }
 \arguments{
 \item{num}{Solution number}
 
 \item{data}{Data set}
 
-\item{costes}{Cost vector}
+\item{costs}{Cost vector}
 
 \item{inputs}{Names of input variables}
 

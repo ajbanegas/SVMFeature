@@ -4,10 +4,10 @@
 \alias{fnds}
 \title{Fast Non-Dominated Sorting (fnds)}
 \usage{
-fnds(poblacion)
+fnds(population)
 }
 \arguments{
-\item{poblacion}{Population class object}
+\item{population}{Population class object}
 }
 \value{
 Updated Population class object with sorted fronts
