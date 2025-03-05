@@ -1,7 +1,7 @@
-#' @title Definition of the Solucion Class
+#' @title Definition of the Solution Class
 #'
 #' @description
-#'   Defines the `Solucion` class, which represents an individual solution.
+#'   Defines the `Solution` class, which represents an individual solution.
 #'
 #' @param num Solution number
 #' @param data Data set
@@ -10,10 +10,10 @@
 #' @param output Name of the output variable
 #' @param num_features Number of features
 #'
-#' @return Object of the `Solucion` class
+#' @return Object of the `Solution` class
 #'
 #' @export
-Solucion <- function(num, data, costes, inputs, output, num_features) {
+Solution <- function(num, data, costes, inputs, output, num_features) {
   # Definir variables de instancia
   solucion <- list(
     num = num,
@@ -46,7 +46,7 @@ Solucion <- function(num, data, costes, inputs, output, num_features) {
 #' @description
 #'   Method to convert the solution to a dictionary
 #'
-#' @param solucion Solucion class object
+#' @param solucion Solution class object
 #'
 #' @return List with the information of the solution
 to_dict <- function(solucion) {
@@ -76,7 +76,7 @@ to_dict <- function(solucion) {
 #' @description
 #'   Method to obtain a random class vector from the dataset.
 #'
-#' @param solucion Solucion class object containing the dataset
+#' @param solucion Solution class object containing the dataset
 #' @param clase Class for which to obtain a vector
 #'
 #' @return Index of the random class vector
@@ -96,9 +96,9 @@ obtener_vector_clase <- function(solucion, clase) {
 #' @description
 #'   Method to generate a random solution by selecting random features and class vectors.
 #'
-#' @param solucion Solucion class object to modify
+#' @param solucion Solution class object to modify
 #'
-#' @return Solucion class object with a randomly generated solution
+#' @return Solution class object with a randomly generated solution
 generar_solucion_aleatoria <- function(solucion) {
   # Seleccionar dos puntos de la clase A y B
   clases <- sort(unique(solucion$data[[solucion$output]]))
@@ -137,22 +137,22 @@ generar_solucion_aleatoria <- function(solucion) {
 #' @description
 #'   Method to construct planes by calculating the coefficients based on features.
 #'
-#' @param solucion Solucion class object containing data and features to construct planes
+#' @param solucion Solution class object containing data and features to construct planes
 #'
-#' @return Solucion class object with constructed planes
+#' @return Solution class object with constructed planes
 construir_planos <- function(solucion) {
   # Preparar el dataframe data_sol seleccionando solo las filas y columnas necesarias
   indices_validos <- unlist(solucion$vectors)
   indices_validos <- indices_validos[indices_validos <= nrow(solucion$data) & indices_validos > 0]
 
   if (length(indices_validos) == 0) {
-    stop("No hay índices válidos en 'vectors'.")
+    stop("No valid index in 'vectors'.")
   }
 
   # Filtrar las características para asegurarse de que están presentes en los datos
   features_validos <- solucion$features[solucion$features %in% names(solucion$data)]
   if (length(features_validos) == 0) {
-    stop("No hay características válidas para la selección.")
+    stop("No valid feature for selection.")
   }
 
   # Subseleccionar el dataframe
@@ -176,7 +176,7 @@ construir_planos <- function(solucion) {
     medio <- mean(solucion$plano_termino_b)
     solucion$plano_termino_b <- c(solucion$plano_termino_b, medio)
   } else {
-    stop("No se han calculado términos del plano, por lo que no se puede calcular el medio.")
+    stop("No plane terms have been calculated, so the mean can not be calculated.")
   }
 
   return(solucion)
@@ -189,9 +189,9 @@ construir_planos <- function(solucion) {
 #' @description
 #'   This method calculates the distance objective based on the plane equation.
 #'
-#' @param solucion Solucion class object containing the plane equation
+#' @param solucion Solution class object containing the plane equation
 #'
-#' @return Solucion class object with the distance objective calculated
+#' @return Solution class object with the distance objective calculated
 calcular_objetivo_distancia <- function(solucion) {
   # Inicializar el objetivo de distancia a cero
   solucion$objetivo[[1]] <- 0
@@ -214,9 +214,9 @@ calcular_objetivo_distancia <- function(solucion) {
 #' @description
 #'   This method calculates the epsilon objective by evaluating misclassified points.
 #'
-#' @param solucion Solucion class object containing data and features for classification
+#' @param solucion Solution class object containing data and features for classification
 #'
-#' @return Solucion class object with the epsilon objective calculated
+#' @return Solution class object with the epsilon objective calculated
 calcular_objetivo_epsilon <- function(solucion) {
   # Inicializar contadores de clasificaciones malas
   mc_pos <- 0
@@ -274,13 +274,13 @@ calcular_objetivo_epsilon <- function(solucion) {
 #' @description
 #'   This function evaluates a solution by calculating its objectives.
 #'
-#' @param solucion Solucion class object to be evaluated
+#' @param solucion Solution class object to be evaluated
 #'
-#' @return Solucion class object with updated evaluation status and objectives
+#' @return Solution class object with updated evaluation status and objectives
 evaluar_solucion <- function(solucion) {
   # Verifica si la suma de plano_coord es cero
   if (sum(solucion$plano_coord) == 0) {
-    cat("No se puede evaluar la solucion, no hay coordenadas.\n")
+    cat("The solution cannot be evaluated, there are no coordinates.\n")
     solucion$evaluacion_exitosa <- FALSE
     return(solucion)
   } else {
@@ -385,9 +385,9 @@ comparar_soluciones <- function(solucion1, solucion2) {
 #' @description
 #'   This function mutates the vectors in the solution by assigning new class vectors.
 #'
-#' @param solucion Solucion class object to mutate
+#' @param solucion Solution class object to mutate
 #'
-#' @return Solucion class object with updated vectors
+#' @return Solution class object with updated vectors
 mutar_vectores <- function(solucion) {
   # Obtener las clases únicas y ordenarlas
   clases <- sort(unique(solucion$data[[solucion$output]]))

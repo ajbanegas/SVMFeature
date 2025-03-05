@@ -1,7 +1,7 @@
-#' @title Definition of the Poblacion Class
+#' @title Definition of the Population Class
 #'
 #' @description
-#'   This function defines the `Poblacion` class with its attributes and methods.
+#'   This function defines the `Population` class with its attributes and methods.
 #'
 #' @param data Dataset
 #' @param costes Associated costs
@@ -17,10 +17,10 @@
 #' @param p_mut_coord Mutation coordinates (default: 0.2)
 #' @param mut_coord Mutation coordinates (default: 0)
 #'
-#' @return Object of the `Poblacion` class
+#' @return Object of the `Population` class
 #'
 #' @export
-Poblacion <- function(data, costes, tam_pob, inputs, output, num_features, num_obj = 2, clones = 0,
+Population <- function(data, costes, tam_pob, inputs, output, num_features, num_obj = 2, clones = 0,
                       p_mutacion = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
   poblacion <- list(
     num_features = num_features,
@@ -57,12 +57,12 @@ Poblacion <- function(data, costes, tam_pob, inputs, output, num_features, num_o
 #'
 #' @return Population class object updated with the generated initial population
 generar_poblacion_inicial <- function(poblacion) {
-  cat(sprintf("Generando poblacion inicial de tamaño %d\n", poblacion$tam_pob))
+  cat(sprintf("Creating initial population of size %d\n", poblacion$tam_pob))
   num_sol <- 0
 
   while (length(poblacion$lista_soluciones) < poblacion$tam_pob) {
     # Crear y generar solución aleatoria
-    sol <- Solucion(num_sol, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
+    sol <- Solution(num_sol, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
     sol <- generar_solucion_aleatoria(sol)
     sol <- evaluar_solucion(sol)
 
@@ -74,10 +74,10 @@ generar_poblacion_inicial <- function(poblacion) {
         poblacion$lista_soluciones[[num_sol + 1]] <- sol
         num_sol <- num_sol + 1
       } else {
-        cat("Clon detectado y omitido.\n")
+        cat("Detected and skipped clone.\n")
       }
     } else {
-      cat("Solución no válida generada y descartada.\n")
+      cat("Disregarded invalid solution.\n")
     }
   }
   return(poblacion)
@@ -109,7 +109,7 @@ imprimir_poblacion <- function(poblacion) {
 
   # Verificar si la columna FRONT es numérica ahora
   if(!is.numeric(df_soluciones$FRONT)) {
-    stop("La columna FRONT no se pudo convertir a numérica.")
+    stop("FRONT column could not be converted to numeric.")
   }
 
   # Ordenar el dataframe por la columna 'FRONT'
@@ -258,22 +258,22 @@ torneo_elegir_padre <- function(poblacion) {
 #' @return List of two new offspring solutions
 cruzar_soluciones <- function(poblacion, padre, madre, num) {
   # Crear 4 hijos (soluciones)
-  hijo <- Solucion(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
+  hijo <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
   hijo$features <- padre$features
   hijo$plano_coord <- padre$plano_coord
   hijo$vectors <- list(padre$vectors[[1]], madre$vectors[[2]])
 
-  hijo1 <- Solucion(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
+  hijo1 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
   hijo1$features <- madre$features
   hijo1$plano_coord <- madre$plano_coord
   hijo1$vectors <- list(padre$vectors[[1]], madre$vectors[[2]])
 
-  hijo2 <- Solucion(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
+  hijo2 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
   hijo2$features <- padre$features
   hijo2$plano_coord <- padre$plano_coord
   hijo2$vectors <- list(madre$vectors[[1]], padre$vectors[[2]])
 
-  hijo3 <- Solucion(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
+  hijo3 <- Solution(num, poblacion$data, poblacion$costes, poblacion$inputs, poblacion$output, poblacion$num_features)
   hijo3$features <- madre$features
   hijo3$plano_coord <- madre$plano_coord
   hijo3$vectors <- list(madre$vectors[[1]], padre$vectors[[2]])
@@ -324,7 +324,7 @@ cruzar_soluciones <- function(poblacion, padre, madre, num) {
 #'
 #' @return Updated Population class object with the new population generated
 nueva_poblacion <- function(poblacion) {
-  cat(sprintf("Creando nueva población por cruce desde %d hasta %d....\n", poblacion$tam_pob, 2 * poblacion$tam_pob))
+  cat(sprintf("Creating new population by crossover from %d to %d....\n", poblacion$tam_pob, 2 * poblacion$tam_pob))
   i <- poblacion$tam_pob
 
   while (length(poblacion$lista_soluciones) < 2 * poblacion$tam_pob) {
@@ -432,7 +432,7 @@ mutar_solucion <- function(solucion, poblacion) {
 #'
 #' @return Reduced Population class object
 reducir_poblacion <- function(poblacion) {
-  cat("Reduciendo de tamaño 2N a tamaño N....\n")
+  cat("Size reduction from 2N to N....\n")
 
   # Crear nueva población vacía
   nueva_poblacion <- list(
@@ -455,7 +455,7 @@ reducir_poblacion <- function(poblacion) {
     })
     soluciones_front <- soluciones_front[!sapply(soluciones_front, is.null)]
     nueva_poblacion$lista_soluciones <- c(nueva_poblacion$lista_soluciones, soluciones_front)
-    cat(sprintf("FRONT %d: %d soluciones\n", cont_front, length(nueva_poblacion$lista_soluciones)))
+    cat(sprintf("FRONT %d: %d solutions\n", cont_front, length(nueva_poblacion$lista_soluciones)))
     cont_front <- cont_front + 1
   }
 

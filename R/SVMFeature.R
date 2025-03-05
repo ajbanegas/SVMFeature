@@ -1,5 +1,5 @@
-source("R/solucion.R")
-source("R/poblacion.R")
+source("R/Solution.R")
+source("R/Population.R")
 
 library(dplyr)
 library(magrittr)
@@ -71,14 +71,16 @@ SVMFeature <- setRefClass(
       .self$tiempo_max <- tiempo_max
       .self$modo <- modo
 
+      # TODO pasar el dataframe como parámetro de entrada
       datos <- read.table(.self$archivo, sep = "\t", header = TRUE)
 
+      # TODO quitar la imputación de valores
       # Imputar valores faltantes con la media de la columna
-      for (col in names(datos)) {
-        if (any(is.na(datos[[col]]))) {
-          datos[[col]][is.na(datos[[col]])] <- mean(datos[[col]], na.rm = TRUE)
-        }
-      }
+      #for (col in names(datos)) {
+      #  if (any(is.na(datos[[col]]))) {
+      #    datos[[col]][is.na(datos[[col]])] <- mean(datos[[col]], na.rm = TRUE)
+      #  }
+      #}
 
       # Normalización de los datos
       scaler <- function(x) {
@@ -94,10 +96,10 @@ SVMFeature <- setRefClass(
       datos_norm[output] <- datos[[output]]
 
       # Depuramos los datos cargados
-      cat("Datos cargados y normalizados:\n")
+      cat("Normalized data:\n")
       print(head(datos_norm))
 
-      .self$poblacion <- Poblacion(data = datos_norm, costes = .self$costes, tam_pob = .self$tam_pob, inputs = .self$inputs, output = .self$output, num_features = .self$num_fea)
+      .self$poblacion <- Population(data = datos_norm, costes = .self$costes, tam_pob = .self$tam_pob, inputs = .self$inputs, output = .self$output, num_features = .self$num_fea)
       .self$mejor_poblacion <- NULL
     },
 
@@ -136,36 +138,36 @@ SVMFeature <- setRefClass(
       if (.self$modo == "iteraciones") {
         iter <- 0
         while (iter < .self$n_iter) {
-          cat(sprintf("ITERACION %d: %f\n", iter, as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
+          cat(sprintf("ITERATION %d: %f\n", iter, as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
           ejecutar_iteracion()
           iter <- iter + 1
         }
       } else if (.self$modo == "tiempo") {
         while (as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs")) < .self$tiempo_max) {
-          cat(sprintf("TIEMPO TRANSCURRIDO: %f\n", as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
+          cat(sprintf("TIME: %f\n", as.numeric(difftime(Sys.time(), tiempo_inicial, units = "secs"))))
           ejecutar_iteracion()
         }
       } else {
-        stop("Modo de ejecución no válido. Use 'iteraciones' o 'tiempo'.")
+        stop("Invalid execution mode. Usage: 'iteraciones' or 'tiempo'.")
       }
 
       imprimir_poblacion(.self$mejor_poblacion)
 
       if (is.null(.self$mejor_poblacion$df_soluciones)) {
-        stop("Error: df_soluciones es NULL.")
+        stop("Error: df_soluciones is NULL.")
       }
 
       poblacion_front1 <- filter(.self$mejor_poblacion$df_soluciones, FRONT == 1)
 
       if (nrow(poblacion_front1) == 0) {
-        cat("No hay soluciones en el frente 1 para graficar.\n")
+        cat("There is no solution in front 1 to plot.\n")
       } else {
         poblacion_front1$DIST <- as.numeric(poblacion_front1$DIST)
         poblacion_front1$EPS <- as.numeric(poblacion_front1$EPS)
 
         plot <- ggplot(poblacion_front1, aes(x = DIST, y = EPS)) +
           geom_point(color = 'blue') +
-          labs(x = 'Distancia', y = 'Epsilon', title = 'Gráfico de Soluciones en el Frente 1') +
+          labs(x = 'Distance', y = 'Epsilon', title = 'Solutions in Front 1') +
           theme_minimal() +
           theme(panel.grid.major = element_line(size = 0.5, linetype = 'solid', colour = "gray"))
 
@@ -186,7 +188,7 @@ SVMFeature <- setRefClass(
 
       # Imprimir número de soluciones por frente
       fronts_count <- df_soluciones %>% group_by(FRONT) %>% summarize(count = n())
-      cat("Número de soluciones por frente:\n")
+      cat("Number of solutions by front:\n")
       print(fronts_count)
     }
   )
