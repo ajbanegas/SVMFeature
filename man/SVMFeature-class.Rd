@@ -8,6 +8,8 @@
 \arguments{
 \item{archivo}{Character. The file path of the input data.}
 
+\item{datos}{DataFrame. The input data.}
+
 \item{inputs}{Character vector. The names of the input features.}
 
 \item{output}{Character. The name of the output variable.}
