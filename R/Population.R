@@ -43,7 +43,10 @@ Population <- function(data, costs, pop_size, inputs, output, num_features, num_
     mut_coord = mut_coord,
     num_obj = num_obj
   )
+  #return(population)
+  class(population) <- "Population"
   return(population)
+
 }
 
 

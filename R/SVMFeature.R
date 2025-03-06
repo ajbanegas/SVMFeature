@@ -24,6 +24,15 @@ utils::globalVariables(c("EPS"))
 SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
                        n_iter = 10, max_time = 300, mode = "iters") {
 
+  if (!is.data.frame(data)) stop('Error: "data" must be a data frame')
+  if (!mode %in% c("iters", "time")) stop('Error: "mode" must be either "iters" or "time"')
+  if (!is.character(inputs) || !all(inputs %in% colnames(data))) stop('Error: "inputs" must be a character vector of existing column names in "data"')
+  if (!is.character(output) || length(output) != 1 || !(output %in% colnames(data))) stop('Error: "output" must be a single column name in "data"')
+  if (!is.numeric(max_time) || max_time <= 0) stop('Error: "max_time" must be a positive number')
+  if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
+  if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
+  if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
+
   # Normalization function
   scaler <- function(x) {
     rng <- range(x, na.rm = TRUE)
@@ -67,7 +76,7 @@ run.SVMFeature <- function(object) {
 
   object$population <- generate_initial_population(object$population)
   object$population <- fnds(object$population)
-  object <- update_df_solutions(object)
+  object <- update_df_solutions.SVMFeature(object)
 
   object$best_population <- object$population
   init_time <- Sys.time()
@@ -80,7 +89,7 @@ run.SVMFeature <- function(object) {
     reduced_population <- fnds(reduced_population)
 
     object$population$solution_list <- reduced_population$solution_list
-    object <- update_df_solutions(object)
+    object <- update_df_solutions.SVMFeature(object)
 
     # Compare and keep the best population based on FRONT == 1
     current_solutions <- nrow(dplyr::filter(object$population$df_solutions, FRONT == 1))
