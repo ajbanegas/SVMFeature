@@ -49,6 +49,8 @@ Solution <- function(num, data, costs, inputs, output, num_features) {
 #' @param solution Solution class object
 #'
 #' @return List with the information of the solution
+#'
+#' @export
 to_dict <- function(solution) {
   return(list(
     #SOL = solution$num,
@@ -80,6 +82,7 @@ to_dict <- function(solution) {
 #' @param clazz Class for which to obtain a vector
 #'
 #' @return Index of the random class vector
+#' @export
 get_class_vector <- function(solution, clazz) {
   indices <- which(solution$data[[solution$output]] == clazz)
   if (length(indices) > 0) {
@@ -98,7 +101,11 @@ get_class_vector <- function(solution, clazz) {
 #'
 #' @param solution Solution class object to modify
 #'
+#' @importFrom stats runif
+#'
 #' @return Solution class object with a randomly generated solution
+#'
+#' @export
 generate_random_solution <- function(solution) {
   # Seleccionar dos puntos de la clase A y B
   classes <- sort(unique(solution$data[[solution$output]]))
@@ -140,6 +147,8 @@ generate_random_solution <- function(solution) {
 #' @param solution Solution class object containing data and features to construct planes
 #'
 #' @return Solution class object with constructed planes
+#'
+#' @export
 construct_planes <- function(solution) {
   # Preparar el dataframe data_sol seleccionando solo las filas y columnas necesarias
   valid_indices <- unlist(solution$vectors)
@@ -192,6 +201,8 @@ construct_planes <- function(solution) {
 #' @param solution Solution class object containing the plane equation
 #'
 #' @return Solution class object with the distance objective calculated
+#'
+#' @export
 calculate_distance_objective <- function(solution) {
   # Inicializar el objective de distancia a cero
   solution$objective[[1]] <- 0
@@ -217,6 +228,8 @@ calculate_distance_objective <- function(solution) {
 #' @param solution Solution class object containing data and features for classification
 #'
 #' @return Solution class object with the epsilon objective calculated
+#'
+#' @export
 calculate_epsilon_objective <- function(solution) {
   # Inicializar contadores de clasificaciones malas
   mc_pos <- 0
@@ -277,6 +290,8 @@ calculate_epsilon_objective <- function(solution) {
 #' @param solution Solution class object to be evaluated
 #'
 #' @return Solution class object with updated evaluation status and objectives
+#'
+#' @export
 evaluate_solution <- function(solution) {
   # Verifica si la suma de plane_coord es cero
   if (sum(solution$plane_coord) == 0) {
@@ -307,6 +322,8 @@ evaluate_solution <- function(solution) {
 #' @param solution2 Second solution object
 #'
 #' @return TRUE if solucion1 dominates solucion2, otherwise FALSE
+#'
+#' @export
 dominate <- function(solution1, solution2) {
   # Comprobar si alguno de los objetivos es NA o no numérico antes de comparar
   if (is.na(solution1$objective[[1]]) || !is.numeric(solution1$objective[[1]]) ||
@@ -333,6 +350,8 @@ dominate <- function(solution1, solution2) {
 #' @param solution2 Second solution object
 #'
 #' @return 0 if the solutions are equal, 1 if solucion1 dominates solucion2, 2 if solucion2 dominates solucion1
+#'
+#' @export
 dominate2 <- function(solution1, solution2) {
   # Comprobar si los objetivos son iguales
   if (solution1$objective[[1]] == solution2$objective[[1]] && solution1$objective[[2]] == solution2$objective[[2]]) {
@@ -355,6 +374,8 @@ dominate2 <- function(solution1, solution2) {
 #' @param solution2 Second solution object
 #'
 #' @return The solution object with better dominance or front
+#'
+#' @export
 compare_solutions <- function(solution1, solution2) {
   if (solution1$front == solution2$front) {
     if (length(solution1$list_dominated_by) == length(solution2$list_dominated_by)) {
@@ -388,6 +409,8 @@ compare_solutions <- function(solution1, solution2) {
 #' @param solution Solution class object to mutate
 #'
 #' @return Solution class object with updated vectors
+#'
+#' @export
 mutate_vectors <- function(solution) {
   # Obtener las clases únicas y ordenarlas
   classes <- sort(unique(solution$data[[solution$output]]))

@@ -1,9 +1,13 @@
-source("R/Solution.R")
-source("R/Population.R")
+#source("R/Solution.R")
+#source("R/Population.R")
 
-library(dplyr)
-library(magrittr)
-library(ggplot2)
+#usethis::use_package("dplyr")
+#usethis::use_package("ggplot2")
+#usethis::use_package("magrittr")
+library("dplyr")
+library("ggplot2")
+library("magrittr")
+
 
 #' SVMFeature Class
 #'
@@ -20,6 +24,9 @@ library(ggplot2)
 #' @param n_iter Numeric. The number of iterations.
 #' @return An instance of the SVMFeature class.
 #' @export
+#'
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by summarize n
 #'
 #' @examples
 #' data <- read.table("data/prueba.txt", sep = ";", header = TRUE)
@@ -87,7 +94,7 @@ SVMFeature <- setRefClass(
       cat("Normalized data:\n")
       print(head(norm_data))
 
-      .self$population <- Population(data = norm_data, costs = .self$costs, pop_size = .self$pop_size, inputs = .self$inputs, output = .self$output, num_features = .self$num_fea)
+      .self$population <- SVMFeature::Population(data = norm_data, costs = .self$costs, pop_size = .self$pop_size, inputs = .self$inputs, output = .self$output, num_features = .self$num_fea)
       .self$best_population <- NULL
     },
 

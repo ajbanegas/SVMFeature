@@ -56,6 +56,8 @@ Population <- function(data, costs, pop_size, inputs, output, num_features, num_
 #' @param population Population class object
 #'
 #' @return Population class object updated with the generated initial population
+#'
+#' @export
 generate_initial_population <- function(population) {
   cat(sprintf("Creating initial population of size %d\n", population$pop_size))
   num_sol <- 0
@@ -93,6 +95,8 @@ generate_initial_population <- function(population) {
 #' @param population Population class object
 #'
 #' @return Prints the population in the console
+#'
+#' @export
 print_population <- function(population) {
   # Convertir lista de soluciones a data frame
   df_solutions <- do.call(rbind, lapply(population$solution_list, function(solution) {
@@ -129,6 +133,8 @@ print_population <- function(population) {
 #' @param solucion_eva Solution object to be evaluated for duplication
 #'
 #' @return 1 if a clone is found, otherwise 0
+#'
+#' @export
 check_clones <- function(population, solution_eva) {
   clone <- 0
   for (sol in population$solution_list) {
@@ -157,6 +163,8 @@ check_clones <- function(population, solution_eva) {
 #' @param population Population class object
 #'
 #' @return Updated Population class object with sorted fronts
+#'
+#' @export
 fnds <- function(population) {
   pop_size <- length(population$solution_list)
   fronts <- list()
@@ -225,6 +233,8 @@ fnds <- function(population) {
 #' @param population Population class object
 #'
 #' @return Selected parent solution
+#'
+#' @export
 tournament_select_parent <- function(population) {
   # Seleccionar dos candidatos al azar
   num1 <- sample(seq_len(length(population$solution_list)), 1)
@@ -255,7 +265,11 @@ tournament_select_parent <- function(population) {
 #' @param mother Second parent solution
 #' @param num Unique identifier for the new solutions
 #'
+#' @importFrom stats runif
+#'
 #' @return List of two new offspring solutions
+#'
+#' @export
 crossover_solutions <- function(population, parent, mother, num) {
   # Crear 4 hijos (soluciones)
   child <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
@@ -322,7 +336,11 @@ crossover_solutions <- function(population, parent, mother, num) {
 #'
 #' @param population Population class object
 #'
+#' @importFrom stats runif
+#'
 #' @return Updated Population class object with the new population generated
+#'
+#' @export
 new_population <- function(population) {
   cat(sprintf("Creating new population by crossover from %d to %d....\n", population$pop_size, 2 * population$pop_size))
   i <- population$pop_size
@@ -373,7 +391,11 @@ new_population <- function(population) {
 #' @param solution Solution object to mutate
 #' @param population Population class object that contains mutation parameters
 #'
+#' @importFrom stats runif
+#'
 #' @return Mutated solution object
+#'
+#' @export
 mutate_solution <- function(solution, population) {
   random <- runif(1)
 
@@ -431,6 +453,8 @@ mutate_solution <- function(solution, population) {
 #' @param population Population class object to reduce
 #'
 #' @return Reduced Population class object
+#'
+#' @export
 reduce_population <- function(population) {
   cat("Size reduction from 2N to N....\n")
 
@@ -485,6 +509,8 @@ reduce_population <- function(population) {
 #' @param num_front The front number to calculate the crowding distance for
 #'
 #' @return List of solutions with updated crowding distances
+#'
+#' @export
 crowding_distance <- function(population, num_front) {
   # Extraer soluciones del frente especificado
   front_solutions <- lapply(population$solution_list, function(sol) {
