@@ -48,8 +48,8 @@ Population(
 \item{mut_coord}{Mutation coordinates (default: 0)}
 }
 \value{
-Object of the `Population` class
+Object of the \code{Population} class
 }
 \description{
-This function defines the `Population` class with its attributes and methods.
+This function defines the \code{Population} class with its attributes and methods.
 }

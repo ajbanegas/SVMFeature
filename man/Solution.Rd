@@ -20,8 +20,8 @@ Solution(num, data, costs, inputs, output, num_features)
 \item{num_features}{Number of features}
 }
 \value{
-Object of the `Solution` class
+Object of the \code{Solution} class
 }
 \description{
-Defines the `Solution` class, which represents an individual solution.
+Defines the \code{Solution} class, which represents an individual solution.
 }

@@ -133,7 +133,7 @@ print_population <- function(population) {
 #'   This function checks if a solution already exists in the solution list to avoid duplicates.
 #'
 #' @param population Population
-#' @param solucion_eva Solution object to be evaluated for duplication
+#' @param solution_eva Solution object to be evaluated for duplication
 #'
 #' @return 1 if a clone is found, otherwise 0
 #'

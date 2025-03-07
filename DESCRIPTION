@@ -13,7 +13,7 @@ Description: The "SVMFeature" R package presents a comprehensive suite for Suppo
   facilitates efficient optimization of SVM models while overcoming common challenges like 
   overfitting. For detailed insights into the algorithm and usage guidelines, please consult 
   the vignette.
-License: MIT + file LICENSE
+License: AGPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
@@ -21,7 +21,6 @@ Imports:
     dplyr,
     magrittr,
     ggplot2,
-    methods,
     stats
 Authors@R: c(
     person(given = "Ángel", 
@@ -50,3 +49,4 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 
     R (>= 2.10)
+Roxygen: list(markdown = TRUE)
