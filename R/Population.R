@@ -16,12 +16,14 @@
 #' @param p_mut_fea Feature mutation probability (default: 0.4)
 #' @param p_mut_coord Mutation coordinates (default: 0.2)
 #' @param mut_coord Mutation coordinates (default: 0)
+#' @param objective The objective (default: distance-epsilon)
 #'
 #' @return Object of the `Population` class
 #'
 #' @export
 Population <- function(data, costs, pop_size, inputs, output, num_features, num_obj = 2, clones = 0,
-                      p_mutation = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
+                      p_mutation = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0,
+                      objective = "distance-epsilon") {
   population <- list(
     num_features = num_features,
     inputs = inputs,
@@ -41,12 +43,12 @@ Population <- function(data, costs, pop_size, inputs, output, num_features, num_
     p_mut_fea = p_mut_fea,
     p_mut_coord = p_mut_coord,
     mut_coord = mut_coord,
-    num_obj = num_obj
+    num_obj = num_obj,
+    objective = objective
   )
-  #return(population)
+
   class(population) <- "Population"
   return(population)
-
 }
 
 
@@ -67,13 +69,16 @@ generate_initial_population <- function(population) {
 
   while (length(population$solution_list) < population$pop_size) {
     # Crear y generar solución aleatoria
-    sol <- Solution(num_sol, population$data, population$costs, population$inputs, population$output, population$num_features)
+    sol <- Solution(num_sol, population$data, population$costs, population$inputs,
+                    population$output, population$num_features, population$objective)
+
     sol <- generate_random_solution(sol)
     sol <- evaluate_solution(sol)
 
     # Comprobar si la solución ha sido evaluada exitosamente
     if (sol$successful_evaluation) {
       # Comprobación adicional para clones si necesario
+
       if (population$clones == 1 || check_clones(population, sol) == 0) {
         # Añadir la solución evaluada y actualizada a la población
         population$solution_list[[num_sol + 1]] <- sol
@@ -133,7 +138,7 @@ print_population <- function(population) {
 #'   This function checks if a solution already exists in the solution list to avoid duplicates.
 #'
 #' @param population Population
-#' @param solucion_eva Solution object to be evaluated for duplication
+#' @param solution_eva Solution object to be evaluated for duplication
 #'
 #' @return 1 if a clone is found, otherwise 0
 #'
@@ -142,12 +147,25 @@ check_clones <- function(population, solution_eva) {
   clone <- 0
   for (sol in population$solution_list) {
     # Comparar todas las características relevantes
+    if (population$objective == 'distance-epsilon') {
+      sol_obj_a = sol$objective[[1]]
+      sol_obj_b = sol$objective[[2]]
+      soleva_obj_a = solution_eva$objective[[1]]
+      soleva_obj_b = solution_eva$objective[[2]]
+
+    } else if (population$objective == 'confusion-matrix') {
+      sol_obj_a = sol$objective[[3]]
+      sol_obj_b = sol$objective[[4]]
+      soleva_obj_a = solution_eva$objective[[3]]
+      soleva_obj_b = solution_eva$objective[[4]]
+    }
+
     if (all(sol$features == solution_eva$features) &&
-        abs(sol$objective[[1]] - solution_eva$objective[[1]]) < 1e-5 &&
-        abs(sol$objective[[2]] - solution_eva$objective[[2]]) < 1e-5 &&
-        all(abs(sol$plane_coord - solution_eva$plane_coord) < 1e-5) &&
-        identical(sol$vectors, solution_eva$vectors)) {
-      clone <- 1
+          abs(sol_obj_a - soleva_obj_a) < 1e-5 &&
+          abs(sol_obj_b - soleva_obj_b) < 1e-5 &&
+          all(abs(sol$plane_coord - solution_eva$plane_coord) < 1e-5) &&
+          identical(sol$vectors, solution_eva$vectors)) {
+        clone <- 1
       break
     } else {
       clone <- 0
@@ -275,22 +293,26 @@ tournament_select_parent <- function(population) {
 #' @export
 crossover_solutions <- function(population, parent, mother, num) {
   # Crear 4 hijos (soluciones)
-  child <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child <- Solution(num, population$data, population$costs, population$inputs,
+                    population$output, population$num_features, population$objective)
   child$features <- parent$features
   child$plane_coord <- parent$plane_coord
   child$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  child1 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child1 <- Solution(num, population$data, population$costs, population$inputs,
+                     population$output, population$num_features, population$objective)
   child1$features <- mother$features
   child1$plane_coord <- mother$plane_coord
   child1$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  child2 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child2 <- Solution(num, population$data, population$costs, population$inputs,
+                     population$output, population$num_features, population$objective)
   child2$features <- parent$features
   child2$plane_coord <- parent$plane_coord
   child2$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
-  child3 <- Solution(num, population$data, population$costs, population$inputs, population$output, population$num_features)
+  child3 <- Solution(num, population$data, population$costs, population$inputs,
+                     population$output, population$num_features, population$objective)
   child3$features <- mother$features
   child3$plane_coord <- mother$plane_coord
   child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
@@ -555,3 +577,4 @@ crowding_distance <- function(population, num_front) {
 
   return(front_solutions)
 }
+

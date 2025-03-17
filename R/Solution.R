@@ -9,11 +9,12 @@
 #' @param inputs Names of input variables
 #' @param output Name of the output variable
 #' @param num_features Number of features
+#' @param obj Objective
 #'
 #' @return Object of the `Solution` class
 #'
 #' @export
-Solution <- function(num, data, costs, inputs, output, num_features) {
+Solution <- function(num, data, costs, inputs, output, num_features, obj) {
   # Definir variables de instancia
   solution <- list(
     num = num,
@@ -28,7 +29,8 @@ Solution <- function(num, data, costs, inputs, output, num_features) {
     vectors = list(),
     plane_coord = list(),
     plane_term_b = list(),
-    objective = numeric(2),  # Index 1 para distancia, Index 2 para epsilon
+    obj_fn = obj,
+    objective = numeric(4),  # (1)distancia, (2)epsilon, (3)FP, (4)FN
     sol_dom_by = 0,  # Inicializar contador de dominación
     dominates_list = list(),  # Lista de soluciones que esta solución domina
     list_dominated_by = list(),  # Lista de soluciones que dominan a esta solución
@@ -36,6 +38,7 @@ Solution <- function(num, data, costs, inputs, output, num_features) {
     successful_evaluation = FALSE,
     crowding_distance = 0
   )
+
   return(solution)
 }
 
@@ -60,9 +63,9 @@ to_dict <- function(solution) {
     FEATURES = solution$features,
     DIST = solution$objective[1],  # Distancia
     EPS = solution$objective[2],   # Epsilon
+    MCPOS = solution$objective[3],  # Falsos positivos
+    MCNEG = solution$objective[4],  # Falsos negativos
     # COSTE = solution$obj_coste,  # Descomentar si obj_coste es utilizado
-    # MC+ = solution$obj_mal_clasificados$mc_pos,  # Descomentar si se utiliza
-    # MC- = solution$obj_mal_clasificados$mc_neg,  # Descomentar si se utiliza
     DOMINATES_TO = solution$dominates_list,
     DOMINATED_BY = solution$list_dominated_by,
     SOL_DOM_BY = solution$sol_dom_by,
@@ -110,6 +113,8 @@ generate_random_solution <- function(solution) {
   # Seleccionar dos puntos de la clase A y B
   classes <- sort(unique(solution$data[[solution$output]]))
   solution$vectors <- vector("list", length(classes))
+
+  #cat(solution$objective)
 
   for (i in seq_along(classes)) {
     solution$vectors[[i]] <- get_class_vector(solution, classes[i])
@@ -232,8 +237,6 @@ calculate_distance_objective <- function(solution) {
 #' @export
 calculate_epsilon_objective <- function(solution) {
   # Inicializar contadores de clasificaciones malas
-  mc_pos <- 0
-  mc_neg <- 0
   solution$objective[[2]] <- 0
 
   # Iterar sobre todos los datos para calcular la suma de errores
@@ -251,25 +254,67 @@ calculate_epsilon_objective <- function(solution) {
     if (clazz == -1) {
       distance <- distance + solution$plane_term_b[[1]]
       if (distance < 0) {
-        mc_neg <- mc_neg + 1
         solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
       }
     } else {
       distance <- distance + solution$plane_term_b[[2]]
       if (distance > 0) {
-        mc_pos <- mc_pos + 1
         solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
       }
     }
   }
 
-  # Opcionalmente, podría almacenar los conteos de clasificación incorrecta si fuera necesario
-  solution$mc_pos <- mc_pos
-  solution$mc_neg <- mc_neg
-
   return(solution)
 }
 
+
+
+#' @title Method to Calculate the FP/FN Objective
+#'
+#' @description
+#'   This method calculates the FP/FN objective by evaluating misclassified points.
+#'
+#' @param solution Solution class object containing data and features for classification
+#'
+#' @return Solution class object with the FP/FN objective calculated
+#'
+#' @export
+calculate_misclassified_objective <- function(solution) {
+  # Inicializar contadores de clasificaciones malas
+  #solution$mc_pos <- 0
+  #solution$mc_neg <- 0
+  solution$objective[[3]] <- 0
+  solution$objective[[4]] <- 0
+
+  # Iterar sobre todos los datos para calcular la suma de errores
+  for (i in 1:nrow(solution$data)) {
+    clazz <- solution$data[i, solution$output]
+    distance <- 0
+
+    # Calcular la distancia lineal usando los coeficientes
+    for (index in seq_along(solution$features)) {
+      fea <- solution$features[[index]]
+      distance <- distance + solution$plane_coord[index] * solution$data[i, fea]
+    }
+
+    # Ajustar por el término independiente y contar errores
+    if (clazz == -1) {
+      distance <- distance + solution$plane_term_b[[1]]
+      if (distance < 0) {
+        #solution$mc_neg <- solution$mc_neg + 1
+        solution$objective[[4]] <- solution$objective[[4]] + 1
+      }
+    } else {
+      distance <- distance + solution$plane_term_b[[2]]
+      if (distance > 0) {
+        #solution$mc_pos <- solution$mc_pos + 1
+        solution$objective[[3]] <- solution$objective[[3]] + 1
+      }
+    }
+  }
+
+  return(solution)
+}
 
 
 # calcular_objetivo_costes <- function(solucion) {
@@ -301,9 +346,22 @@ evaluate_solution <- function(solution) {
   } else {
     # Procedimientos para evaluar la solución si hay coordenadas válidas
     solution <- construct_planes(solution)
-    solution <- calculate_distance_objective(solution)
-    solution <- calculate_epsilon_objective(solution)
-    # solution <- calcular_objetivo_costes(solution) si es necesario
+
+    # Calcular las funciones objetivo adecuadas
+    if (solution$obj_fn == "distance-epsilon" || solution$obj_fn == "distance-epsilon-costs") {
+      solution <- calculate_distance_objective(solution)
+      solution <- calculate_epsilon_objective(solution)
+
+      if (solution$obj_fn == "distance-epsilon-costs") {
+        # TODO solution <- calculate_costs_objective(solution)
+      }
+    } else if (solution$obj_fn == "confusion-matrix" || solution$obj_fn == "confusion-matrix-costs") {
+      solution <- calculate_misclassified_objective(solution)
+
+      if (solution$obj_fn == "confusion-matrix-costs") {
+        # TODO solution <- calculate_costs_objective(solution)
+      }
+    }
 
     # Asumir que las evaluaciones fueron exitosas si se alcanza este punto
     solution$successful_evaluation <- TRUE
@@ -325,20 +383,49 @@ evaluate_solution <- function(solution) {
 #'
 #' @export
 dominate <- function(solution1, solution2) {
-  # Comprobar si alguno de los objetivos es NA o no numérico antes de comparar
-  if (is.na(solution1$objective[[1]]) || !is.numeric(solution1$objective[[1]]) ||
-      is.na(solution2$objective[[1]]) || !is.numeric(solution2$objective[[1]]) ||
-      is.na(solution1$objective[[2]]) || !is.numeric(solution1$objective[[2]]) ||
-      is.na(solution2$objective[[2]]) || !is.numeric(solution2$objective[[2]])) {
+  if (!is_valid_solution(solution1) || !is_valid_solution(solution2)) {
     # Retorna FALSE o maneja el caso de forma que se ajuste a tu lógica de aplicación
     return(FALSE)
   }
 
   # Procede con la comparación si todos los valores son adecuados
-  return(solution1$objective[[1]] >= solution2$objective[[1]] &&
-           solution1$objective[[2]] <= solution2$objective[[2]])
+  if (solution1$obj_fn == 'distance-epsilon') {
+    return(solution1$objective[[1]] >= solution2$objective[[1]] &&
+             solution1$objective[[2]] <= solution2$objective[[2]])
+
+  } else if (solution1$obj_fn == 'confusion-matrix') {
+    return(solution1$objective[[3]] <= solution2$objective[[3]] &&
+             solution1$objective[[4]] <= solution2$objective[[4]])
+  }
 }
 
+
+#' @title Method to assess if a solution is valid
+#'
+#' @description
+#'   This function determines if the objectives of a given solution
+#'   contain numerical values.
+#'
+#' @param solution A solution object
+#'
+#' @return TRUE if solution is valid, otherwise FALSE
+#'
+#' @export
+is_valid_solution <- function(solution) {
+  if (solution$obj_fn == 'distance-epsilon') {
+    if (is.na(solution$objective[[1]]) || !is.numeric(solution$objective[[1]]) ||
+        is.na(solution$objective[[2]]) || !is.numeric(solution$objective[[2]])) {
+      return(FALSE)
+    }
+  } else if (solution$obj_fn == 'confusion-matrix') {
+    if (is.na(solution$objective[[3]]) || !is.numeric(solution$objective[[3]]) ||
+        is.na(solution$objective[[4]]) || !is.numeric(solution$objective[[4]])) {
+      return(FALSE)
+    }
+  }
+
+  return(TRUE)
+}
 
 
 #' @title Method to Determine Dominance with Three States
@@ -353,16 +440,30 @@ dominate <- function(solution1, solution2) {
 #'
 #' @export
 dominate2 <- function(solution1, solution2) {
-  # Comprobar si los objetivos son iguales
-  if (solution1$objective[[1]] == solution2$objective[[1]] && solution1$objective[[2]] == solution2$objective[[2]]) {
-    return(0)  # No hay dominancia, son iguales
-  } else if (solution1$objective[[1]] >= solution2$objective[[1]] && solution1$objective[[2]] <= solution2$objective[[2]]) {
-    return(1)  # solucion1 domina a solucion2
-  } else {
-    return(2)  # solucion2 domina a solucion1
+  if (solution1$obj_fn == 'distance-epsilon') {
+    # Comprobar si los objetivos son iguales
+    if (solution1$objective[[1]] == solution2$objective[[1]] &&
+        solution1$objective[[2]] == solution2$objective[[2]]) {
+      return(0)  # No hay dominancia, son iguales
+    } else if (solution1$objective[[1]] >= solution2$objective[[1]] &&
+               solution1$objective[[2]] <= solution2$objective[[2]]) {
+      return(1)  # solucion1 domina a solucion2
+    } else {
+      return(2)  # solucion2 domina a solucion1
+    }
+  } else if (solution1$obj_fn == 'confusion-matrix') {
+    # Comprobar si los objetivos son iguales
+    if (solution1$objective[[3]] == solution2$objective[[3]] &&
+        solution1$objective[[4]] == solution2$objective[[4]]) {
+      return(0)  # No hay dominancia, son iguales
+    } else if (solution1$objective[[3]] <= solution2$objective[[3]] &&
+               solution1$objective[[4]] <= solution2$objective[[4]]) {
+      return(1)  # solucion1 domina a solucion2
+    } else {
+      return(2)  # solucion2 domina a solucion1
+    }
   }
 }
-
 
 
 #' @title Method to Compare Solutions

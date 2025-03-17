@@ -1,6 +1,11 @@
+source("R/Population.R")
+library(dplyr)
+
 utils::globalVariables(c("FRONT"))
 utils::globalVariables(c("DIST"))
 utils::globalVariables(c("EPS"))
+utils::globalVariables(c("MCPOS"))
+utils::globalVariables(c("MCNEG"))
 
 #' SVMFeature Class (S3 Implementation)
 #'
@@ -15,6 +20,7 @@ utils::globalVariables(c("EPS"))
 #' @param n_iter Numeric. The number of iterations (default: 10).
 #' @param max_time Numeric. The maximum execution time (default: 300 seconds).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
+#' @param objective Character. "distance-epsilon", "confusion-matrix", "distance-epsilon-costs" or "confusion-matrix-costs"
 #' @return An S3 object of class "SVMFeature".
 #' @export
 #'
@@ -22,7 +28,7 @@ utils::globalVariables(c("EPS"))
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarize n
 SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
-                       n_iter = 10, max_time = 300, mode = "iters") {
+                       n_iter = 10, max_time = 300, mode = "iters", objective="distance-epsilon") {
 
   if (!is.data.frame(data)) stop('Error: "data" must be a data frame')
   if (!mode %in% c("iters", "time")) stop('Error: "mode" must be either "iters" or "time"')
@@ -32,6 +38,11 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
   if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
   if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
   if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
+  if (!objective %in% c("distance-epsilon", "distance-epsilon-costs",
+                        "confusion-matrix", "confusion-matrix-costs"))
+    stop('Error: "objective" must be either "distance-epsilon",
+         "distance-epsilon-costs", "confusion-matrix" or
+         "confusion-matrix-costs"')
 
   # Normalization function
   scaler <- function(x) {
@@ -59,8 +70,10 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
     n_iter = n_iter,
     max_time = max_time,
     mode = mode,
+    objective = objective,
     population = Population(data = norm_data, costs = costs, pop_size = pop_size,
-                            inputs = inputs, output = output, num_features = num_fea),
+                            inputs = inputs, output = output, num_features = num_fea,
+                            objective = objective),
     best_population = NULL
   )
 
@@ -121,12 +134,33 @@ run.SVMFeature <- function(object) {
     front_population1 <- dplyr::filter(object$best_population$df_solutions, FRONT == 1)
 
     if (nrow(front_population1) > 0) {
-      front_population1$DIST <- as.numeric(front_population1$DIST)
-      front_population1$EPS <- as.numeric(front_population1$EPS)
+      #front_population1$DIST <- as.numeric(front_population1$DIST)
+      #front_population1$EPS <- as.numeric(front_population1$EPS)
 
-      plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = DIST, y = EPS)) +
+      if (object$objective == "distance-epsilon") {
+        front_population1$DIST <- as.numeric(front_population1$DIST)
+        front_population1$EPS <- as.numeric(front_population1$EPS)
+
+        xaxis_label <- 'Distance'
+        yaxis_label <- 'Epsilon'
+
+        xvalues = front_population1$DIST
+        yvalues = front_population1$EPS
+
+      } else if (object$objective == "confusion-matrix") {
+        front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
+        front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
+
+        xaxis_label <- 'False Positives'
+        yaxis_label <- 'False Negatives'
+
+        xvalues = front_population1$MCPOS
+        yvalues = front_population1$MCNEG
+      }
+
+      plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = xvalues, y = yvalues)) +
         ggplot2::geom_point(color = 'blue') +
-        ggplot2::labs(x = 'Distance', y = 'Epsilon', title = 'Solutions in Front 1') +
+        ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Solutions in Front 1') +
         ggplot2::theme_minimal() +
         ggplot2::theme(panel.grid.major = ggplot2::element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
 
