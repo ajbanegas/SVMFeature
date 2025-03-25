@@ -4,7 +4,7 @@
 \alias{Solution}
 \title{Definition of the Solution Class}
 \usage{
-Solution(num, data, costs, inputs, output, num_features)
+Solution(num, data, costs, inputs, output, num_features, obj)
 }
 \arguments{
 \item{num}{Solution number}
@@ -18,6 +18,8 @@ Solution(num, data, costs, inputs, output, num_features)
 \item{output}{Name of the output variable}
 
 \item{num_features}{Number of features}
+
+\item{obj}{Objective}
 }
 \value{
 Object of the `Solution` class

@@ -8,7 +8,7 @@ costs <- c(5, 27, 10)
 tam_pob <- 10
 num_fea <- 2
 n_iter <- 10  # Número de iteraciones
-tiempo_max <- 300  # Tiempo máximo en segundos (300)
+tiempo_max <- 10  # Tiempo máximo en segundos (300)
 modo <- "time"  # Modo de ejecución: "iters" o "time"
 objective <- "confusion-matrix" # "distance-epsilon"
 

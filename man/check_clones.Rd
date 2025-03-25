@@ -9,7 +9,7 @@ check_clones(population, solution_eva)
 \arguments{
 \item{population}{Population}
 
-\item{solucion_eva}{Solution object to be evaluated for duplication}
+\item{solution_eva}{Solution object to be evaluated for duplication}
 }
 \value{
 1 if a clone is found, otherwise 0

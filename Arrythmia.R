@@ -1,6 +1,8 @@
 source("R/SVMFeature.R")
+source("R/Population.R")
+source("R/Solution.R")
 
-datos <- read.table("data/prueba2.txt", sep = "\t", header = TRUE)
+datos <- read.table("data/Arrythmia_p.txt", sep = "\t", header = TRUE)
 print(datos)
 
 # Definir variables iniciales

@@ -1,11 +1,10 @@
-source("R/Population.R")
-library(dplyr)
-
 utils::globalVariables(c("FRONT"))
 utils::globalVariables(c("DIST"))
 utils::globalVariables(c("EPS"))
 utils::globalVariables(c("MCPOS"))
 utils::globalVariables(c("MCNEG"))
+
+library(dplyr)
 
 #' SVMFeature Class (S3 Implementation)
 #'
@@ -160,7 +159,7 @@ run.SVMFeature <- function(object) {
 
       plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = xvalues, y = yvalues)) +
         ggplot2::geom_point(color = 'blue') +
-        ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Solutions in Front 1') +
+        ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Non-Dominated Solutions') +
         ggplot2::theme_minimal() +
         ggplot2::theme(panel.grid.major = ggplot2::element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
 

@@ -17,7 +17,8 @@ Population(
   p_mut_ind = 0.4,
   p_mut_fea = 0.4,
   p_mut_coord = 0.2,
-  mut_coord = 0
+  mut_coord = 0,
+  objective = "distance-epsilon"
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ Population(
 \item{p_mut_coord}{Mutation coordinates (default: 0.2)}
 
 \item{mut_coord}{Mutation coordinates (default: 0)}
+
+\item{objective}{The objective (default: distance-epsilon)}
 }
 \value{
 Object of the `Population` class
