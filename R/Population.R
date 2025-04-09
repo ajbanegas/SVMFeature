@@ -3,7 +3,6 @@
 #' @description
 #'   This function defines the `Population` class with its attributes and methods.
 #'
-#' @param data Dataset
 #' @param costs Associated costs
 #' @param pop_size Population size
 #' @param inputs Input variables
@@ -21,15 +20,14 @@
 #' @return Object of the `Population` class
 #'
 #' @export
-Population <- function(data, costs, pop_size, inputs, output, num_features, num_obj = 2, clones = 0,
-                      p_mutation = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0,
-                      objective = "distance-epsilon") {
+Population <- function(costs, pop_size, inputs, output, num_features, num_obj = 2,
+                       clones = 0, p_mutation = 0.7, p_mut_ind = 0.4, p_mut_fea = 0.4,
+                       p_mut_coord = 0.2, mut_coord = 0, objective = "distance-epsilon")
+{
   population <- list(
     num_features = num_features,
     inputs = inputs,
     output = output,
-    num_dim = length(inputs),
-    data = data,
     costs = costs,
     pop_size = pop_size,
     clones = clones,
@@ -63,17 +61,17 @@ Population <- function(data, costs, pop_size, inputs, output, num_features, num_
 #' @return Population class object updated with the generated initial population
 #'
 #' @export
-generate_initial_population <- function(population) {
+generate_initial_population <- function(population, data) {
   #cat(sprintf("Creating initial population of size %d\n", population$pop_size))
   num_sol <- 0
 
   while (length(population$solution_list) < population$pop_size) {
     # Crear y generar solución aleatoria
-    sol <- Solution(num_sol, population$data, population$costs, population$inputs,
-                    population$output, population$num_features, population$objective)
+    sol <- Solution(num_sol, population$costs, population$inputs, population$output,
+                    population$num_features, population$objective)
 
-    sol <- generate_random_solution(sol)
-    sol <- evaluate_solution(sol)
+    sol <- generate_random_solution(sol, data)
+    sol <- evaluate_solution(sol, data)
 
     # Comprobar si la solución ha sido evaluada exitosamente
     if (sol$successful_evaluation) {
@@ -294,37 +292,37 @@ tournament_select_parent <- function(population) {
 #' @return List of two new offspring solutions
 #'
 #' @export
-crossover_solutions <- function(population, parent, mother, num) {
+crossover_solutions <- function(population, parent, mother, num, data) {
   # Crear 4 hijos (soluciones)
-  child <- Solution(num, population$data, population$costs, population$inputs,
+  child <- Solution(num, population$costs, population$inputs,
                     population$output, population$num_features, population$objective)
   child$features <- parent$features
   child$plane_coord <- parent$plane_coord
   child$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  child1 <- Solution(num, population$data, population$costs, population$inputs,
+  child1 <- Solution(num, population$costs, population$inputs,
                      population$output, population$num_features, population$objective)
   child1$features <- mother$features
   child1$plane_coord <- mother$plane_coord
   child1$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
-  child2 <- Solution(num, population$data, population$costs, population$inputs,
+  child2 <- Solution(num, population$costs, population$inputs,
                      population$output, population$num_features, population$objective)
   child2$features <- parent$features
   child2$plane_coord <- parent$plane_coord
   child2$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
-  child3 <- Solution(num, population$data, population$costs, population$inputs,
+  child3 <- Solution(num, population$costs, population$inputs,
                      population$output, population$num_features, population$objective)
   child3$features <- mother$features
   child3$plane_coord <- mother$plane_coord
   child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
   # Evaluar las soluciones
-  child <- evaluate_solution(child)
-  child1 <- evaluate_solution(child1)
-  child2 <- evaluate_solution(child2)
-  child3 <- evaluate_solution(child3)
+  child <- evaluate_solution(child, data)
+  child1 <- evaluate_solution(child1, data)
+  child2 <- evaluate_solution(child2, data)
+  child3 <- evaluate_solution(child3, data)
 
   # Comparar soluciones y determinar el ganador y el perdedor
   domina <- dominate2(child, child1)
@@ -369,7 +367,7 @@ crossover_solutions <- function(population, parent, mother, num) {
 #' @return Updated Population class object with the new population generated
 #'
 #' @export
-new_population <- function(population) {
+new_population <- function(population, data) {
   #cat(sprintf("Creating new population by crossover from %d to %d....\n", population$pop_size, 2 * population$pop_size))
   i <- population$pop_size
 
@@ -380,25 +378,25 @@ new_population <- function(population) {
       mother <- tournament_select_parent(population)
     }
 
-    offspring <- crossover_solutions(population, parent, mother, i)
+    offspring <- crossover_solutions(population, parent, mother, i, data)
     for (child in offspring) {
       if (length(population$solution_list) >= 2 * population$pop_size) {
         break  # Evitar agregar más hijos si se alcanza el tamaño máximo
       }
 
       if (runif(1) < population$p_mutation) {
-        child <- mutate_solution(child, population)
+        child <- mutate_solution(child, population, data)
       }
 
-      child <- evaluate_solution(child)
+      child <- evaluate_solution(child, data)
       while (!child$successful_evaluation) {
-        child <- generate_random_solution(child)
-        child <- evaluate_solution(child)
+        child <- generate_random_solution(child, data)
+        child <- evaluate_solution(child, data)
       }
 
       while (check_clones(population, child) == 1) {
-        child <- mutate_solution(child, population)
-        child <- evaluate_solution(child)
+        child <- mutate_solution(child, population, data)
+        child <- evaluate_solution(child, data)
       }
 
       population$solution_list[[length(population$solution_list) + 1]] <- child
@@ -424,16 +422,16 @@ new_population <- function(population) {
 #' @return Mutated solution object
 #'
 #' @export
-mutate_solution <- function(solution, population) {
+mutate_solution <- function(solution, population, data) {
   random <- runif(1)
 
   # Mutación de vectores
   if (random < population$p_mut_ind) {
-    solution <- mutate_vectors(solution)
+    solution <- mutate_vectors(solution, data)
   }
 
   # Mutación de características
-  if (population$num_dim > population$num_features) {
+  if (length(population$inputs) > population$num_features) {
     for (i in seq_along(solution$features)) {
       rand_val <- runif(1)
       if (rand_val < population$p_mut_fea) {
@@ -488,7 +486,6 @@ reduce_population <- function(population) {
 
   # Crear nueva población vacía
   new_population <- list(
-    data = population$data,
     costs = population$costs,
     pop_size = population$pop_size,
     inputs = population$inputs,

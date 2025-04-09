@@ -56,7 +56,8 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
 
   # Create the S3 object (a list with attributes)
   object <- list(
-    data = data,
+    #data = data,
+    data = norm_data,
     inputs = inputs,
     output = output,
     costs = costs,
@@ -66,7 +67,7 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
     max_time = max_time,
     mode = mode,
     objective = objective,
-    population = Population(data = norm_data, costs = costs, pop_size = pop_size,
+    population = Population(costs = costs, pop_size = pop_size,
                             inputs = inputs, output = output, num_features = num_fea,
                             objective = objective),
     best_population = NULL
@@ -82,7 +83,7 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
 #' @export
 run.SVMFeature <- function(object) {
 
-  object$population <- generate_initial_population(object$population)
+  object$population <- generate_initial_population(object$population, object$data)
 
   object$population <- fnds(object$population)
 
@@ -94,7 +95,7 @@ run.SVMFeature <- function(object) {
   init_time <- Sys.time()
 
   run_iteration <- function() {
-    object$population <- new_population(object$population)
+    object$population <- new_population(object$population, object$data)
     object$population <- fnds(object$population)
 
     reduced_population <- reduce_population(object$population)
