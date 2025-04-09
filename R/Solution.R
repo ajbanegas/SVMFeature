@@ -4,23 +4,16 @@
 #'   Defines the `Solution` class, which represents an individual solution.
 #'
 #' @param num Solution number
-#' @param costs Cost vector
-#' @param inputs Names of input variables
-#' @param output Name of the output variable
 #' @param num_features Number of features
 #' @param obj Objective
 #'
 #' @return Object of the `Solution` class
 #'
 #' @export
-Solution <- function(num, costs, inputs, output, num_features, obj) {
+Solution <- function(num, num_features, obj) {
   # Definir variables de instancia
   solution <- list(
     num = num,
-    costs = costs,
-    inputs = inputs,
-    output = output,
-    num_dim = length(inputs),
     num_features = num_features,
     data_sol = NULL,
     features = list(),
@@ -84,8 +77,8 @@ to_dict <- function(solution) {
 #'
 #' @return Index of the random class vector
 #' @export
-get_class_vector <- function(solution, clazz, data) {
-  indices <- which(data[[solution$output]] == clazz)
+get_class_vector <- function(solution, clazz, data, output) {
+  indices <- which(data[[output]] == clazz)
   if (length(indices) > 0) {
     return(sample(indices, 1))
   } else {
@@ -107,21 +100,21 @@ get_class_vector <- function(solution, clazz, data) {
 #' @return Solution class object with a randomly generated solution
 #'
 #' @export
-generate_random_solution <- function(solution, data) {
+generate_random_solution <- function(solution, data, inputs, output) {
   # Seleccionar dos puntos de la clase A y B
-  classes <- sort(unique(data[[solution$output]]))
+  classes <- sort(unique(data[[output]]))
   solution$vectors <- vector("list", length(classes))
 
   for (i in seq_along(classes)) {
-    solution$vectors[[i]] <- get_class_vector(solution, classes[i], data)
+    solution$vectors[[i]] <- get_class_vector(solution, classes[i], data, output)
   }
 
   # Seleccionar aleatoriamente p características y p coordenadas entre [-1, 1]
-  if (solution$num_features == solution$num_dim) {
-    solution$features <- solution$inputs
+  if (solution$num_features == length(inputs)) {
+    solution$features <- inputs
   } else {
     # Se verifica que las entradas existan como columnas
-    possible_features <- solution$inputs[which(solution$inputs %in% names(data))]
+    possible_features <- inputs[which(inputs %in% names(data))]
     solution$features <- sample(possible_features, solution$num_features)
   }
 
@@ -232,13 +225,13 @@ calculate_distance_objective <- function(solution) {
 #' @return Solution class object with the epsilon objective calculated
 #'
 #' @export
-calculate_epsilon_objective <- function(solution, data) {
+calculate_epsilon_objective <- function(solution, data, output) {
   # Inicializar contadores de clasificaciones malas
   solution$objective[[2]] <- 0
 
   # Iterar sobre todos los datos para calcular la suma de errores
   for (i in 1:nrow(data)) {
-    clazz <- data[i, solution$output]
+    clazz <- data[i, output]
     distance <- 0
     denominator <- 0
 
@@ -306,14 +299,14 @@ calculate_epsilon_objective <- function(solution, data) {
 #' @return Solution class object with the FP/FN objective calculated
 #'
 #' @export
-calculate_misclassified_objective <- function(solution, data) {
+calculate_misclassified_objective <- function(solution, data, output) {
   # Inicializar contadores de clasificaciones malas
   solution$objective[[3]] <- 0
   solution$objective[[4]] <- 0
 
   # Iterar sobre todos los datos para calcular la suma de errores
   for (i in 1:nrow(data)) {
-    clazz <- data[i, solution$output]
+    clazz <- data[i, output]
     distance <- 0
     denominator <- 0
 
@@ -389,7 +382,7 @@ calculate_misclassified_objective <- function(solution, data) {
 #' @return Solution class object with updated evaluation status and objectives
 #'
 #' @export
-evaluate_solution <- function(solution, data) {
+evaluate_solution <- function(solution, data, output) {
   # Verifica si la suma de plane_coord es cero
   if (sum(solution$plane_coord) == 0) {
     cat("The solution cannot be evaluated, there are no coordinates.\n")
@@ -402,13 +395,13 @@ evaluate_solution <- function(solution, data) {
     # Calcular las funciones objetivo adecuadas
     if (solution$obj_fn == "distance-epsilon" || solution$obj_fn == "distance-epsilon-costs") {
       solution <- calculate_distance_objective(solution)
-      solution <- calculate_epsilon_objective(solution, data)
+      solution <- calculate_epsilon_objective(solution, data, output)
 
       if (solution$obj_fn == "distance-epsilon-costs") {
         # TODO solution <- calculate_costs_objective(solution)
       }
     } else if (solution$obj_fn == "confusion-matrix" || solution$obj_fn == "confusion-matrix-costs") {
-      solution <- calculate_misclassified_objective(solution, data)
+      solution <- calculate_misclassified_objective(solution, data, output)
 
       if (solution$obj_fn == "confusion-matrix-costs") {
         # TODO solution <- calculate_costs_objective(solution)
@@ -564,18 +557,18 @@ compare_solutions <- function(solution1, solution2) {
 #' @return Solution class object with updated vectors
 #'
 #' @export
-mutate_vectors <- function(solution, data) {
+mutate_vectors <- function(solution, data, output) {
   # Obtener las clases únicas y ordenarlas
-  classes <- sort(unique(data[[solution$output]]))
+  classes <- sort(unique(data[[output]]))
 
   # Iterar sobre cada clase
   for (i in seq_along(classes)) {
     # Llamar a get_class_vector para la clase actual
-    vector <- get_class_vector(solution, classes[i], data)
+    vector <- get_class_vector(solution, classes[i], data, output)
 
     # Verificar que el nuevo vector sea diferente al actual y si no, buscar otro
     while (identical(vector, solution$vectors[[i]])) {
-      vector <- get_class_vector(solution, classes[i], data)
+      vector <- get_class_vector(solution, classes[i], data, output)
     }
 
     # Actualizar el vector en la solución
