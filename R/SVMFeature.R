@@ -54,10 +54,6 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
   norm_data <- as.data.frame(lapply(data[, inputs], scaler))
   norm_data[[output]] <- data[[output]]
 
-  # Print normalized data
-  cat("Normalized data:\n")
-  print(head(norm_data))
-
   # Create the S3 object (a list with attributes)
   object <- list(
     data = data,
@@ -87,7 +83,11 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
 run.SVMFeature <- function(object) {
 
   object$population <- generate_initial_population(object$population)
+
   object$population <- fnds(object$population)
+
+  print(object$population$df_solutions)
+
   object <- update_df_solutions.SVMFeature(object)
 
   object$best_population <- object$population
@@ -102,6 +102,9 @@ run.SVMFeature <- function(object) {
 
     object$population$solution_list <- reduced_population$solution_list
     object <- update_df_solutions.SVMFeature(object)
+
+    fronts_count <- object$population$df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
+    cat(sprintf("Number of solutions in front 1: %d\n", fronts_count$count[1]))
 
     # Compare and keep the best population based on FRONT == 1
     current_solutions <- nrow(dplyr::filter(object$population$df_solutions, FRONT == 1))
@@ -133,9 +136,6 @@ run.SVMFeature <- function(object) {
     front_population1 <- dplyr::filter(object$best_population$df_solutions, FRONT == 1)
 
     if (nrow(front_population1) > 0) {
-      #front_population1$DIST <- as.numeric(front_population1$DIST)
-      #front_population1$EPS <- as.numeric(front_population1$EPS)
-
       if (object$objective == "distance-epsilon") {
         front_population1$DIST <- as.numeric(front_population1$DIST)
         front_population1$EPS <- as.numeric(front_population1$EPS)
@@ -187,11 +187,6 @@ update_df_solutions.SVMFeature <- function(object) {
   df_solutions$FRONT <- as.numeric(as.character(df_solutions$FRONT))
   df_solutions <- df_solutions[order(df_solutions$FRONT), ]
   object$population$df_solutions <- df_solutions
-
-  # Print the number of solutions per front
-  fronts_count <- df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
-  cat("Number of solutions by front:\n")
-  print(fronts_count)
 
   return(object)
 }

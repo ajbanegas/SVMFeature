@@ -114,8 +114,6 @@ generate_random_solution <- function(solution) {
   classes <- sort(unique(solution$data[[solution$output]]))
   solution$vectors <- vector("list", length(classes))
 
-  #cat(solution$objective)
-
   for (i in seq_along(classes)) {
     solution$vectors[[i]] <- get_class_vector(solution, classes[i])
   }
@@ -243,23 +241,59 @@ calculate_epsilon_objective <- function(solution) {
   for (i in 1:nrow(solution$data)) {
     clazz <- solution$data[i, solution$output]
     distance <- 0
+    denominator <- 0
 
-    # Calcular la distancia lineal usando los coeficientes
+    # Calculamos la distancia del vector a los planos d= wx + b/||w||
     for (index in seq_along(solution$features)) {
       fea <- solution$features[[index]]
       distance <- distance + solution$plane_coord[index] * solution$data[i, fea]
+      denominator <- denominator + (solution$plane_coord[index] ** 2)
     }
 
     # Ajustar por el término independiente y contar errores
-    if (clazz == -1) {
+    # Si la clase es 1, la distancia se calcula con el plano b[0]
+    if (clazz == 1) {
       distance <- distance + solution$plane_term_b[[1]]
-      if (distance < 0) {
-        solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
-      }
+      #if (distance < 0) {
+      #  solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
+      #}
     } else {
       distance <- distance + solution$plane_term_b[[2]]
-      if (distance > 0) {
-        solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
+      #if (distance > 0) {
+      #  solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
+      #}
+    }
+
+    distance <- distance / denominator ** (1/2)
+
+    # Si b[0] < b[1], la clase 1 está por encima del plano y la clase -1 por debajo
+    if (solution$plane_term_b[[1]] < solution$plane_term_b[[2]]) {
+      # Si la clase es -1 y la distancia es positiva está mal clasificada
+      if (clazz == -1) {
+        if (distance > 0) {
+          solution$objective[[2]] <- solution$objective[[2]] + distance
+        }
+      }
+      # Si la clase es 1 y la distancia es negativa está mal clasificada
+      else {
+        if (distance < 0) {
+          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
+        }
+      }
+    }
+    # Si b[0] > b[1], la clase 1 está por encima del plano y la clase -1 por debajo
+    else {
+      # Si la clase es -1 y la distancia es negativa está mal clasificada
+      if (clazz == -1) {
+        if (distance < 0) {
+          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
+        }
+      }
+      # Si la clase es 1 y la distancia es positiva está mal clasificada
+      else {
+        if (distance > 0) {
+          solution$objective[[2]] <- solution$objective[[2]] + distance
+        }
       }
     }
   }
@@ -281,8 +315,6 @@ calculate_epsilon_objective <- function(solution) {
 #' @export
 calculate_misclassified_objective <- function(solution) {
   # Inicializar contadores de clasificaciones malas
-  #solution$mc_pos <- 0
-  #solution$mc_neg <- 0
   solution$objective[[3]] <- 0
   solution$objective[[4]] <- 0
 
@@ -290,32 +322,59 @@ calculate_misclassified_objective <- function(solution) {
   for (i in 1:nrow(solution$data)) {
     clazz <- solution$data[i, solution$output]
     distance <- 0
+    denominator <- 0
 
-    # Calcular la distancia lineal usando los coeficientes
+    # Calculamos la distancia del vector a los planos d= wx + b/||w||
     for (index in seq_along(solution$features)) {
       fea <- solution$features[[index]]
       distance <- distance + solution$plane_coord[index] * solution$data[i, fea]
+      denominator <- denominator + (solution$plane_coord[index] ** 2)
     }
 
     # Ajustar por el término independiente y contar errores
-    if (clazz == -1) {
+    # Si la clase es 1, la distancia se calcula con el plano b[0]
+    if (clazz == 1) {
       distance <- distance + solution$plane_term_b[[1]]
-      if (distance < 0) {
-        #solution$mc_neg <- solution$mc_neg + 1
-        solution$objective[[4]] <- solution$objective[[4]] + 1
-      }
     } else {
       distance <- distance + solution$plane_term_b[[2]]
-      if (distance > 0) {
-        #solution$mc_pos <- solution$mc_pos + 1
-        solution$objective[[3]] <- solution$objective[[3]] + 1
+    }
+
+    distance <- distance / denominator ** (1/2)
+
+    # Si b[0] < b[1], la clase 1 está por encima del plano y la clase -1 por debajo
+    if (solution$plane_term_b[[1]] < solution$plane_term_b[[2]]) {
+      # Si la clase es -1 y la distancia es positiva está mal clasificada
+      if (clazz == -1) {
+        if (distance > 0) {
+          solution$objective[[4]] <- solution$objective[[4]] + 1
+        }
+      }
+      # Si la clase es 1 y la distancia es negativa está mal clasificada
+      else {
+        if (distance < 0) {
+          solution$objective[[3]] <- solution$objective[[3]] + 1
+        }
+      }
+    }
+    # Si b[0] > b[1], la clase 1 está por encima del plano y la clase -1 por debajo
+    else {
+      # Si la clase es -1 y la distancia es negativa está mal clasificada
+      if (clazz == -1) {
+        if (distance < 0) {
+          solution$objective[[4]] <- solution$objective[[4]] + 1
+        }
+      }
+      # Si la clase es 1 y la distancia es positiva está mal clasificada
+      else {
+        if (distance > 0) {
+          solution$objective[[3]] <- solution$objective[[3]] + 1
+        }
       }
     }
   }
 
   return(solution)
 }
-
 
 # calcular_objetivo_costes <- function(solucion) {
 #   solucion$obj_coste <- 0
