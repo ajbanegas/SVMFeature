@@ -62,14 +62,12 @@ generate_initial_population <- function(population, data, inputs, output, costs)
   while (length(population$solution_list) < population$pop_size) {
     # Crear y generar solución aleatoria
     sol <- Solution(num_sol, population$num_features, population$objective)
-
     sol <- generate_random_solution(sol, data, inputs, output)
     sol <- evaluate_solution(sol, data, output)
 
     # Comprobar si la solución ha sido evaluada exitosamente
     if (sol$successful_evaluation) {
       # Comprobación adicional para clones si necesario
-
       if (population$clones == 1 || check_clones(population, sol) == 0) { # TODO clones siempre vale 0
         # Añadir la solución evaluada y actualizada a la población
         population$solution_list[[num_sol + 1]] <- sol
@@ -117,8 +115,6 @@ print_population <- function(population) {
 
   # Ordenar el dataframe por la columna 'FRONT'
   df_solutions <- df_solutions[order(df_solutions$FRONT), ]
-
-  #print(df_solutions)
 }
 
 
@@ -314,11 +310,11 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
   child3 <- evaluate_solution(child3, data, output)
 
   # Comparar soluciones y determinar el ganador y el perdedor
-  domina <- dominate2(child, child1)
+  dominates <- dominate2(child, child1)
   losing_child <- child
-  if (domina == 1) {
+  if (dominates == 1) {
     losing_child <- child1
-  } else if (domina == 0 && runif(1) < 0.5) {
+  } else if (dominates == 0 && runif(1) < 0.5) {
     losing_child <- child1
   }
 
@@ -474,29 +470,43 @@ reduce_population <- function(population) {
   #cat("Size reduction from 2N to N...\n")
 
   # Crear nueva población vacía
-  new_population <- list(
-    #costs = population$costs,
-    pop_size = population$pop_size,
-    #inputs = population$inputs,
-    #output = population$output,
-    num_features = population$num_features,
-    solution_list = list()
-  )
+  new_population <- Population(pop_size = population$pop_size,
+                               num_features = population$num_fea,
+                               objective = population$objective)
 
   # Contador de frentes
   front_counter <- 1
 
   # Añadir soluciones de los frentes a la nueva población hasta completar el tamaño
-  while (length(new_population$solution_list) +
-         length(population$fronts[[front_counter]]$solutions) <= population$pop_size)
-  {
-    front_solutions <- lapply(population$solution_list, function(sol) {
-      if (sol$front == front_counter) return(sol) else return(NULL)
-    })
-    front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
-    new_population$solution_list <- c(new_population$solution_list, front_solutions)
-    #cat(sprintf("FRONT %d: %d solutions\n", front_counter, length(new_population$solution_list)))
-    front_counter <- front_counter + 1
+  #while (length(new_population$solution_list) +
+  #       length(population$fronts[[front_counter]]$solutions) <= population$pop_size)
+  #{
+  #  front_solutions <- lapply(population$solution_list, function(sol) {
+  #    if (sol$front == front_counter) return(sol) else return(NULL)
+  #  })
+  #  front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
+  #  new_population$solution_list <- c(new_population$solution_list, front_solutions)
+
+  #  #cat(sprintf("FRONT %d: %d solutions\n", front_counter, length(new_population$solution_list)))
+
+  #  front_counter <- front_counter + 1
+  #}
+  repeat {
+      front_solutions <- lapply(population$solution_list, function(sol) {
+        if (sol$front == front_counter) return(sol) else return(NULL)
+      })
+      front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
+      new_population$solution_list <- c(new_population$solution_list, front_solutions)
+
+      #cat(sprintf("FRONT %d: %d solutions\n", front_counter, length(new_population$solution_list)))
+
+      if (length(new_population$solution_list) +
+          length(population$fronts[[front_counter]]$solutions) > new_population$pop_size)
+      {
+        break
+      }
+
+      front_counter <- front_counter + 1
   }
 
   # Si no se ha completado la población, seleccionar las mejores soluciones restantes usando crowding distance

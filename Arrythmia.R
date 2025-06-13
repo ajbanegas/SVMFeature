@@ -9,7 +9,7 @@ datos <- read.table("data/Arrythmia_p.txt", sep = "\t", header = TRUE)
 inputs <- paste0('x', 0:257)  # Columnas de entrada
 output <- 'y1'  # Columna de salida
 costs <- rep(1, length(inputs))  # Asignar un coste de 1 a cada característica
-tam_pob <- 50
+tam_pob <- 500
 num_fea <- 5
 n_iter <- 10  # Número de iteraciones
 tiempo_max <- 300  # Tiempo máximo en segundos

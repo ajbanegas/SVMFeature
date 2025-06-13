@@ -119,12 +119,14 @@ generate_random_solution <- function(solution, data, inputs, output) {
   }
 
   # Calcular las coordenadas del plano
-  solution$plane_coord <- runif(solution$num_features, -1, 1) # Coordenadas aleatorias para cada característica
+  # Coordenadas aleatorias para cada característica
+  solution$plane_coord <- runif(solution$num_features, -1, 1)
 
   # Ajustar dataframe de solución
   indices <- unlist(solution$vectors)
   if (length(indices) == 0 || length(solution$features) == 0) {
-    return(solution) # Retorna la solución sin modificar si no hay índices válidos o características seleccionadas
+    # Retorna la solución sin modificar si no hay índices válidos o características seleccionadas
+    return(solution)
   }
 
   solution$data_sol <- data[indices, solution$features, drop = FALSE]

@@ -86,9 +86,6 @@ run.SVMFeature <- function(object) {
                                                    object$costs)
 
   object$population <- fnds(object$population)
-
-  print(object$population$df_solutions)
-
   object <- update_df_solutions.SVMFeature(object)
 
   object$best_population <- object$population
