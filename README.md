@@ -8,5 +8,5 @@ install.packages("SVMFeature")
 ```
 And the development version from GitHub with:
 ```R
-devtools::install_github("adelara00/SVMFeature")
+devtools::install_github("ajbanegas/SVMFeature")
 ```
