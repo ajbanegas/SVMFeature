@@ -14,5 +14,5 @@ TRUE if solution is valid, otherwise FALSE
 }
 \description{
 This function determines if the objectives of a given solution
-  contain numerical values.
+contain numerical values.
 }

@@ -4,10 +4,16 @@
 \alias{generate_random_solution}
 \title{Method to Generate a Random Solution}
 \usage{
-generate_random_solution(solution)
+generate_random_solution(solution, data, inputs, output)
 }
 \arguments{
 \item{solution}{Solution class object to modify}
+
+\item{data}{A data.frame with the input features}
+
+\item{inputs}{A vector of input features}
+
+\item{output}{A vector with class labels}
 }
 \value{
 Solution class object with a randomly generated solution

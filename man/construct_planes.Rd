@@ -4,10 +4,12 @@
 \alias{construct_planes}
 \title{Method to Construct Planes}
 \usage{
-construct_planes(solution)
+construct_planes(solution, data)
 }
 \arguments{
 \item{solution}{Solution class object containing data and features to construct planes}
+
+\item{data}{A data.frame with the input features}
 }
 \value{
 Solution class object with constructed planes

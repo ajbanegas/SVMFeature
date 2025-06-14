@@ -4,10 +4,14 @@
 \alias{mutate_vectors}
 \title{Method to Mutate Vectors}
 \usage{
-mutate_vectors(solution)
+mutate_vectors(solution, data, output)
 }
 \arguments{
 \item{solution}{Solution class object to mutate}
+
+\item{data}{A data.frame with the input features.}
+
+\item{output}{A vector with class labels.}
 }
 \value{
 Solution class object with updated vectors

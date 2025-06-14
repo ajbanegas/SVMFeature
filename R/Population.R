@@ -51,6 +51,10 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
 #'   This function generates the initial population.
 #'
 #' @param population Population class object
+#' @param data A data.frame with the input features
+#' @param inputs A vector of input features
+#' @param output A vector with class labels
+#' @param costs A vector with feature costs
 #'
 #' @return Population class object updated with the generated initial population
 #'
@@ -275,6 +279,9 @@ tournament_select_parent <- function(population) {
 #' @param parent First parent solution
 #' @param mother Second parent solution
 #' @param num Unique identifier for the new solutions
+#' @param data A data.frame with the input features
+#' @param output A vector with class labels
+#' @param costs A vector with feature costs
 #'
 #' @importFrom stats runif
 #'
@@ -346,6 +353,10 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
 #'   This function creates a new population through crossover.
 #'
 #' @param population Population class object
+#' @param data A data.frame with the input features
+#' @param inputs A vector of input features
+#' @param output A vector with class labels
+#' @param costs A vector with feature costs
 #'
 #' @importFrom stats runif
 #'
@@ -401,6 +412,9 @@ new_population <- function(population, data, inputs, output, costs) {
 #'
 #' @param solution Solution object to mutate
 #' @param population Population class object that contains mutation parameters
+#' @param data A data.frame with the input features
+#' @param inputs A vector of input features
+#' @param output A vector with class labels
 #'
 #' @importFrom stats runif
 #'

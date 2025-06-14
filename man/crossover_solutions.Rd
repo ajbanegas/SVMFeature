@@ -4,7 +4,7 @@
 \alias{crossover_solutions}
 \title{Crossover Solutions}
 \usage{
-crossover_solutions(population, parent, mother, num)
+crossover_solutions(population, parent, mother, num, data, output, costs)
 }
 \arguments{
 \item{population}{Population class object}
@@ -14,6 +14,12 @@ crossover_solutions(population, parent, mother, num)
 \item{mother}{Second parent solution}
 
 \item{num}{Unique identifier for the new solutions}
+
+\item{data}{A data.frame with the input features}
+
+\item{output}{A vector with class labels}
+
+\item{costs}{A vector with feature costs}
 }
 \value{
 List of two new offspring solutions

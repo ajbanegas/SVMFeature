@@ -4,10 +4,18 @@
 \alias{new_population}
 \title{Create New Population}
 \usage{
-new_population(population)
+new_population(population, data, inputs, output, costs)
 }
 \arguments{
 \item{population}{Population class object}
+
+\item{data}{A data.frame with the input features}
+
+\item{inputs}{A vector of input features}
+
+\item{output}{A vector with class labels}
+
+\item{costs}{A vector with feature costs}
 }
 \value{
 Updated Population class object with the new population generated

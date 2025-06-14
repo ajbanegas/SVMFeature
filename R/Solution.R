@@ -74,6 +74,8 @@ to_dict <- function(solution) {
 #'
 #' @param solution Solution class object containing the dataset
 #' @param clazz Class for which to obtain a vector
+#' @param data A data.frame with the input features
+#' @param output A vector with class labels
 #'
 #' @return Index of the random class vector
 #' @export
@@ -94,6 +96,9 @@ get_class_vector <- function(solution, clazz, data, output) {
 #'   Method to generate a random solution by selecting random features and class vectors.
 #'
 #' @param solution Solution class object to modify
+#' @param data A data.frame with the input features
+#' @param inputs A vector of input features
+#' @param output A vector with class labels
 #'
 #' @importFrom stats runif
 #'
@@ -142,6 +147,7 @@ generate_random_solution <- function(solution, data, inputs, output) {
 #'   Method to construct planes by calculating the coefficients based on features.
 #'
 #' @param solution Solution class object containing data and features to construct planes
+#' @param data A data.frame with the input features
 #'
 #' @return Solution class object with constructed planes
 #'
@@ -223,6 +229,8 @@ calculate_distance_objective <- function(solution) {
 #'   This method calculates the epsilon objective by evaluating misclassified points.
 #'
 #' @param solution Solution class object containing data and features for classification
+#' @param data A data.frame with the input features.
+#' @param output A vector with class labels.
 #'
 #' @return Solution class object with the epsilon objective calculated
 #'
@@ -297,6 +305,8 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #'   This method calculates the FP/FN objective by evaluating misclassified points.
 #'
 #' @param solution Solution class object containing data and features for classification
+#' @param data A data.frame with the input features
+#' @param output A vector with class labels
 #'
 #' @return Solution class object with the FP/FN objective calculated
 #'
@@ -380,6 +390,8 @@ calculate_misclassified_objective <- function(solution, data, output) {
 #'   This function evaluates a solution by calculating its objectives.
 #'
 #' @param solution Solution class object to be evaluated
+#' @param data A data.frame with the input features
+#' @param output A vector with class labels
 #'
 #' @return Solution class object with updated evaluation status and objectives
 #'
@@ -555,6 +567,8 @@ compare_solutions <- function(solution1, solution2) {
 #'   This function mutates the vectors in the solution by assigning new class vectors.
 #'
 #' @param solution Solution class object to mutate
+#' @param data A data.frame with the input features.
+#' @param output A vector with class labels.
 #'
 #' @return Solution class object with updated vectors
 #'

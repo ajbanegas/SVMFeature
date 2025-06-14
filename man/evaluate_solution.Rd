@@ -4,10 +4,14 @@
 \alias{evaluate_solution}
 \title{Evaluate Solution}
 \usage{
-evaluate_solution(solution)
+evaluate_solution(solution, data, output)
 }
 \arguments{
 \item{solution}{Solution class object to be evaluated}
+
+\item{data}{A data.frame with the input features}
+
+\item{output}{A vector with class labels}
 }
 \value{
 Solution class object with updated evaluation status and objectives

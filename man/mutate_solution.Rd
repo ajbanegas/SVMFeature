@@ -4,12 +4,18 @@
 \alias{mutate_solution}
 \title{Mutate Solution}
 \usage{
-mutate_solution(solution, population)
+mutate_solution(solution, population, data, inputs, output)
 }
 \arguments{
 \item{solution}{Solution object to mutate}
 
 \item{population}{Population class object that contains mutation parameters}
+
+\item{data}{A data.frame with the input features}
+
+\item{inputs}{A vector of input features}
+
+\item{output}{A vector with class labels}
 }
 \value{
 Mutated solution object

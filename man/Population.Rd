@@ -5,11 +5,7 @@
 \title{Definition of the Population Class}
 \usage{
 Population(
-  data,
-  costs,
   pop_size,
-  inputs,
-  output,
   num_features,
   num_obj = 2,
   clones = 0,
@@ -22,15 +18,7 @@ Population(
 )
 }
 \arguments{
-\item{data}{Dataset}
-
-\item{costs}{Associated costs}
-
 \item{pop_size}{Population size}
-
-\item{inputs}{Input variables}
-
-\item{output}{Output variable}
 
 \item{num_features}{Number of features}
 
