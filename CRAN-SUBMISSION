@@ -1,3 +1,5 @@
 Version: 0.1.0
 Date: 2025-06-16 12:10:17 UTC
 SHA: 2113ce3904930ad9045a036023e70cbe008247ab
+
+* The only NOTE about future file timestamps is due to Windows environment. No actual future timestamps are present.
