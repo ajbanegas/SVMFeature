@@ -13,7 +13,8 @@ SVMFeature(
   num_fea,
   n_iter = 10,
   max_time = 300,
-  mode = "iters"
+  mode = "iters",
+  objective = "distance-epsilon"
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ SVMFeature(
 \item{max_time}{Numeric. The maximum execution time (default: 300 seconds).}
 
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
+
+\item{objective}{Character. "distance-epsilon", "confusion-matrix", "distance-epsilon-costs" or "confusion-matrix-costs"}
 }
 \value{
 An S3 object of class "SVMFeature".

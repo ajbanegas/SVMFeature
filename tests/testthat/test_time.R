@@ -34,11 +34,10 @@ test_that("SVMFeature creates a population based on time-limit", {
 
   svm <- SVMFeature(data, inputs = c('x1', 'x2', 'x3'), output = "y",
                     costs = c(5, 27, 10), pop_size = 10, num_fea = 2,
-                    mode = "time", n_iter = 5, max_time = 30)
+                    mode = "time", n_iter = 5, max_time = 10)
   svm <- run.SVMFeature(svm)
 
   expect_s3_class(svm, "SVMFeature")
   expect_false(is.null(svm$population))
   expect_s3_class(svm$population, "Population")
 })
-

@@ -1,6 +1,10 @@
 utils::globalVariables(c("FRONT"))
 utils::globalVariables(c("DIST"))
 utils::globalVariables(c("EPS"))
+utils::globalVariables(c("MCPOS"))
+utils::globalVariables(c("MCNEG"))
+
+library(dplyr)
 
 #' SVMFeature Class (S3 Implementation)
 #'
@@ -15,6 +19,7 @@ utils::globalVariables(c("EPS"))
 #' @param n_iter Numeric. The number of iterations (default: 10).
 #' @param max_time Numeric. The maximum execution time (default: 300 seconds).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
+#' @param objective Character. "distance-epsilon", "confusion-matrix", "distance-epsilon-costs" or "confusion-matrix-costs"
 #' @return An S3 object of class "SVMFeature".
 #' @export
 #'
@@ -22,7 +27,7 @@ utils::globalVariables(c("EPS"))
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarize n
 SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
-                       n_iter = 10, max_time = 300, mode = "iters") {
+                       n_iter = 10, max_time = 300, mode = "iters", objective="distance-epsilon") {
 
   if (!is.data.frame(data)) stop('Error: "data" must be a data frame')
   if (!mode %in% c("iters", "time")) stop('Error: "mode" must be either "iters" or "time"')
@@ -32,6 +37,11 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
   if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
   if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
   if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
+  if (!objective %in% c("distance-epsilon", "distance-epsilon-costs",
+                        "confusion-matrix", "confusion-matrix-costs"))
+    stop('Error: "objective" must be either "distance-epsilon",
+         "distance-epsilon-costs", "confusion-matrix" or
+         "confusion-matrix-costs"')
 
   # Normalization function
   scaler <- function(x) {
@@ -44,13 +54,9 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
   norm_data <- as.data.frame(lapply(data[, inputs], scaler))
   norm_data[[output]] <- data[[output]]
 
-  # Print normalized data
-  cat("Normalized data:\n")
-  print(head(norm_data))
-
   # Create the S3 object (a list with attributes)
   object <- list(
-    data = data,
+    data = norm_data,
     inputs = inputs,
     output = output,
     costs = costs,
@@ -59,8 +65,9 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
     n_iter = n_iter,
     max_time = max_time,
     mode = mode,
-    population = Population(data = norm_data, costs = costs, pop_size = pop_size,
-                            inputs = inputs, output = output, num_features = num_fea),
+    objective = objective,
+    population = Population(pop_size = pop_size, num_features = num_fea,
+                            objective = objective),
     best_population = NULL
   )
 
@@ -74,7 +81,10 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
 #' @export
 run.SVMFeature <- function(object) {
 
-  object$population <- generate_initial_population(object$population)
+  object$population <- generate_initial_population(object$population, object$data,
+                                                   object$inputs, object$output,
+                                                   object$costs)
+
   object$population <- fnds(object$population)
   object <- update_df_solutions.SVMFeature(object)
 
@@ -82,7 +92,8 @@ run.SVMFeature <- function(object) {
   init_time <- Sys.time()
 
   run_iteration <- function() {
-    object$population <- new_population(object$population)
+    object$population <- new_population(object$population, object$data,
+                                        object$inputs, object$output, object$costs)
     object$population <- fnds(object$population)
 
     reduced_population <- reduce_population(object$population)
@@ -90,6 +101,9 @@ run.SVMFeature <- function(object) {
 
     object$population$solution_list <- reduced_population$solution_list
     object <- update_df_solutions.SVMFeature(object)
+
+    fronts_count <- object$population$df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
+    cat(sprintf("Number of solutions in front 1: %d\n", fronts_count$count[1]))
 
     # Compare and keep the best population based on FRONT == 1
     current_solutions <- nrow(dplyr::filter(object$population$df_solutions, FRONT == 1))
@@ -121,12 +135,30 @@ run.SVMFeature <- function(object) {
     front_population1 <- dplyr::filter(object$best_population$df_solutions, FRONT == 1)
 
     if (nrow(front_population1) > 0) {
-      front_population1$DIST <- as.numeric(front_population1$DIST)
-      front_population1$EPS <- as.numeric(front_population1$EPS)
+      if (object$objective == "distance-epsilon") {
+        front_population1$DIST <- as.numeric(front_population1$DIST)
+        front_population1$EPS <- as.numeric(front_population1$EPS)
 
-      plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = DIST, y = EPS)) +
+        xaxis_label <- 'Distance'
+        yaxis_label <- 'Epsilon'
+
+        xvalues = front_population1$DIST
+        yvalues = front_population1$EPS
+
+      } else if (object$objective == "confusion-matrix") {
+        front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
+        front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
+
+        xaxis_label <- 'False Positives'
+        yaxis_label <- 'False Negatives'
+
+        xvalues = front_population1$MCPOS
+        yvalues = front_population1$MCNEG
+      }
+
+      plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = xvalues, y = yvalues)) +
         ggplot2::geom_point(color = 'blue') +
-        ggplot2::labs(x = 'Distance', y = 'Epsilon', title = 'Solutions in Front 1') +
+        ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Non-Dominated Solutions') +
         ggplot2::theme_minimal() +
         ggplot2::theme(panel.grid.major = ggplot2::element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
 
@@ -154,11 +186,6 @@ update_df_solutions.SVMFeature <- function(object) {
   df_solutions$FRONT <- as.numeric(as.character(df_solutions$FRONT))
   df_solutions <- df_solutions[order(df_solutions$FRONT), ]
   object$population$df_solutions <- df_solutions
-
-  # Print the number of solutions per front
-  fronts_count <- df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
-  cat("Number of solutions by front:\n")
-  print(fronts_count)
 
   return(object)
 }

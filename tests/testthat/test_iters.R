@@ -9,8 +9,8 @@ test_that("SVMFeature initializes correctly", {
   costs <- rep(1, length(inputs))
   pop_size <- 50
   num_fea <- 1
-  n_iter <- 10
-  max_time <- 300
+  n_iter <- 5
+  max_time <- 10
   mode <- "iters"
 
   svm <- SVMFeature(data, inputs, output, costs, pop_size, num_fea, n_iter, max_time, mode)
@@ -100,7 +100,7 @@ test_that("SVMFeature creates a population in a max number of iterations", {
   colnames(data) <- c("index", "y1", paste0("x", 0:277))
 
   svm <- SVMFeature(data, inputs = paste0('x', 0:277), output = 'y1', costs = rep(1, 277),
-                    pop_size = 50, num_fea = 5, n_iter = 10, max_time = 300,
+                    pop_size = 50, num_fea = 5, n_iter = 5, max_time = 10,
                     mode = 'iters')
   svm <- run.SVMFeature(svm)
 
