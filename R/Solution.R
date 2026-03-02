@@ -11,7 +11,7 @@
 #'
 #' @export
 Solution <- function(num, num_features, obj) {
-  # Definir variables de instancia
+  # Define instance variables
   solution <- list(
     num = num,
     num_features = num_features,
@@ -21,10 +21,10 @@ Solution <- function(num, num_features, obj) {
     plane_coord = list(),
     plane_term_b = list(),
     obj_fn = obj,
-    objective = numeric(4),  # (1)distancia, (2)epsilon, (3)FP, (4)FN
-    sol_dom_by = 0,  # Inicializar contador de dominación
-    dominates_list = list(),  # Lista de soluciones que esta solución domina
-    list_dominated_by = list(),  # Lista de soluciones que dominan a esta solución
+    objective = numeric(4),  # (1)distance, (2)epsilon, (3)FP, (4)FN
+    sol_dom_by = 0,  # Initialize domination counter
+    dominates_list = list(),  # List of solutions that this solution dominates
+    list_dominated_by = list(),  # List of solutions that dominate this solution
     front = -1,
     successful_evaluation = FALSE,
     crowding_distance = 0
@@ -47,21 +47,26 @@ Solution <- function(num, num_features, obj) {
 #' @export
 to_dict <- function(solution) {
   return(list(
-    #SOL = solution$num,
-    VECTORS = solution$vectors,
-    #PLANO_COOR = solution$plane_coord,
-    #PLANO_COOR_B = solution$plane_term_b,
-    FEATURES = solution$features,
-    DIST = solution$objective[1],  # Distancia
-    EPS = solution$objective[2],   # Epsilon
-    MCPOS = solution$objective[3],  # Falsos positivos
-    MCNEG = solution$objective[4],  # Falsos negativos
-    # COSTE = solution$obj_coste,  # Descomentar si obj_coste es utilizado
-    DOMINATES_TO = solution$dominates_list,
-    DOMINATED_BY = solution$list_dominated_by,
-    SOL_DOM_BY = solution$sol_dom_by,
-    FRONT = solution$front,
-    CROW_DIST = solution$crowding_distance
+    SOL = if(!is.null(solution$num)) solution$num else NULL,
+    VECTORS = if(!is.null(solution$vectors)) solution$vectors else NULL,
+    PLANO_COOR = if(!is.null(solution$plane_coord)) solution$plane_coord else NULL,
+    PLANO_COOR_B = if(!is.null(solution$plane_term_b)) solution$plane_term_b else NULL,
+    FEATURES = if(!is.null(solution$features)) solution$features else NULL,
+    DIST = if(!is.null(solution$objective) && length(solution$objective) >= 1) solution$objective[1] else NULL,
+    EPS = if(!is.null(solution$objective) && length(solution$objective) >= 2) solution$objective[2] else NULL,
+    MCPOS = if(!is.null(solution$objective) && length(solution$objective) >= 3) solution$objective[3] else NULL,
+    MCNEG = if(!is.null(solution$objective) && length(solution$objective) >= 4) solution$objective[4] else NULL,
+    DOMINATES_TO = if(!is.null(solution$dominates_list)) solution$dominates_list else NULL,
+    DOMINATED_BY = if(!is.null(solution$list_dominated_by)) solution$list_dominated_by else NULL,
+    SOL_DOM_BY = if(!is.null(solution$sol_dom_by)) solution$sol_dom_by else NULL,
+    FRONT = if(!is.null(solution$front)) solution$front else NULL,
+    CROW_DIST = if(!is.null(solution$crowding_distance)) solution$crowding_distance else NULL,
+    ACCURACY = if(!is.null(solution$accuracy)) solution$accuracy else NULL,
+    F1 = if(!is.null(solution$f1)) solution$f1 else NULL,
+    PRECISION = if(!is.null(solution$precision)) solution$precision else NULL,
+    RECALL = if(!is.null(solution$recall)) solution$recall else NULL,
+    KAPPA = if(!is.null(solution$kappa)) solution$kappa else NULL,
+    AUC = if(!is.null(solution$auc)) solution$auc else NULL
   ))
 }
 
@@ -84,7 +89,7 @@ get_class_vector <- function(solution, clazz, data, output) {
   if (length(indices) > 0) {
     return(sample(indices, 1))
   } else {
-    return(NA)  # NA es un valor numérico en R, que indica 'no disponible'
+    return(NA)  # NA is a numeric value in R, indicating 'not available'
   }
 }
 
@@ -106,7 +111,7 @@ get_class_vector <- function(solution, clazz, data, output) {
 #'
 #' @export
 generate_random_solution <- function(solution, data, inputs, output) {
-  # Seleccionar dos puntos de la clase A y B
+  # Select two points from class A and B
   classes <- sort(unique(data[[output]]))
   solution$vectors <- vector("list", length(classes))
 
@@ -118,19 +123,21 @@ generate_random_solution <- function(solution, data, inputs, output) {
   if (solution$num_features == length(inputs)) {
     solution$features <- inputs
   } else {
-    # Se verifica que las entradas existan como columnas
+    # Verify that the inputs exist as columns
     possible_features <- inputs[which(inputs %in% names(data))]
-    solution$features <- sample(possible_features, solution$num_features)
+    solution$features <- sort(
+      sample(possible_features, solution$num_features)
+    )
   }
 
-  # Calcular las coordenadas del plano
-  # Coordenadas aleatorias para cada característica
+  # Calculate plane coordinates
+  # Random coordinates for each feature
   solution$plane_coord <- runif(solution$num_features, -1, 1)
 
-  # Ajustar dataframe de solución
+  # Adjust solution dataframe
   indices <- unlist(solution$vectors)
   if (length(indices) == 0 || length(solution$features) == 0) {
-    # Retorna la solución sin modificar si no hay índices válidos o características seleccionadas
+    # Returns the unmodified solution if no valid indices or selected features
     return(solution)
   }
 
@@ -153,7 +160,7 @@ generate_random_solution <- function(solution, data, inputs, output) {
 #'
 #' @export
 construct_planes <- function(solution, data) {
-  # Preparar el dataframe data_sol seleccionando solo las filas y columnas necesarias
+  # Prepare data_sol dataframe by selecting only necessary rows and columns
   valid_indices <- unlist(solution$vectors)
   valid_indices <- valid_indices[valid_indices <= nrow(data) & valid_indices > 0]
 
@@ -161,29 +168,29 @@ construct_planes <- function(solution, data) {
     stop("No valid index in 'vectors'.")
   }
 
-  # Filtrar las características para asegurarse de que están presentes en los datos
+  # Filter features to ensure they are present in the data
   valid_features <- solution$features[solution$features %in% names(data)]
   if (length(valid_features) == 0) {
     stop("No valid feature for selection.")
   }
 
-  # Subseleccionar el dataframe
+  # Subselect the dataframe
   solution$data_sol <- data[valid_indices, valid_features, drop = FALSE]
 
-  # Inicializar el vector de términos del plano
+  # Initialize the plane terms vector
   solution$plane_term_b <- numeric()
 
-  # Calcular los términos independientes de la ecuación del plano
+  # Calculate the independent terms of the plane equation
   for (i in seq_len(nrow(solution$data_sol))) {
     independent_term <- 0
     for (j in seq_along(valid_features)) {
       independent_term <- independent_term + solution$data_sol[i, j] * solution$plane_coord[j]
     }
-    # Añadir el valor negativo de 'independent_term' al vector de términos del plano
+    # Add the negative value of 'independent_term' to the plane terms vector
     solution$plane_term_b <- c(solution$plane_term_b, -independent_term)
   }
 
-  # Añadir el término del plano intermedio
+  # Add the intermediate plane term
   if(length(solution$plane_term_b) > 0) {
     middle <- mean(solution$plane_term_b)
     solution$plane_term_b <- c(solution$plane_term_b, middle)
@@ -207,16 +214,16 @@ construct_planes <- function(solution, data) {
 #'
 #' @export
 calculate_distance_objective <- function(solution) {
-  # Inicializar el objective de distancia a cero
+  # Initialize the distance objective to zero
   solution$objective[[1]] <- 0
   denominator <- sum(solution$plane_coord^2) ^ 0.5
   distance <- abs(solution$plane_term_b[[1]] - solution$plane_term_b[[2]])
 
-  # Calcular la distancia normalizada si el denominador no es cero
+  # Calculate normalized distance if the denominator is not zero
   if (denominator != 0) {
     solution$objective[[1]] <- distance / denominator
   } else {
-    solution$objective[[1]] <- -1  # Valor de error o indicativo de no calculable
+    solution$objective[[1]] <- -1  # Error value or non-calculable indicator
   }
   return(solution)
 }
@@ -236,152 +243,135 @@ calculate_distance_objective <- function(solution) {
 #'
 #' @export
 calculate_epsilon_objective <- function(solution, data, output) {
-  # Inicializar contadores de clasificaciones malas
+  # Initialize misclassification counters
   solution$objective[[2]] <- 0
-
-  # Iterar sobre todos los datos para calcular la suma de errores
-  for (i in 1:nrow(data)) {
-    clazz <- data[i, output]
-    distance <- 0
-    denominator <- 0
-
-    # Calculamos la distancia del vector a los planos d= wx + b/||w||
-    for (index in seq_along(solution$features)) {
-      fea <- solution$features[[index]]
-      distance <- distance + solution$plane_coord[index] * data[i, fea]
-      denominator <- denominator + (solution$plane_coord[index] ** 2)
-    }
-
-    # Ajustar por el término independiente y contar errores
-    # Si la clase es 1, la distancia se calcula con el plano b[0]
-    if (clazz == 1) {
-      distance <- distance + solution$plane_term_b[[1]]
-    } else {
-      distance <- distance + solution$plane_term_b[[2]]
-    }
-
-    distance <- distance / denominator ** (1/2)
-
-    # Si b[0] < b[1], la clase 1 está por encima del plano y la clase -1 por debajo
-    if (solution$plane_term_b[[1]] < solution$plane_term_b[[2]]) {
-      # Si la clase es -1 y la distancia es positiva está mal clasificada
-      if (clazz == -1) {
-        if (distance > 0) {
-          solution$objective[[2]] <- solution$objective[[2]] + distance
-        }
-      }
-      # Si la clase es 1 y la distancia es negativa está mal clasificada
-      else {
-        if (distance < 0) {
-          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
-        }
-      }
-    }
-    # Si b[0] > b[1], la clase 1 está por encima del plano y la clase -1 por debajo
-    else {
-      # Si la clase es -1 y la distancia es negativa está mal clasificada
-      if (clazz == -1) {
-        if (distance < 0) {
-          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
-        }
-      }
-      # Si la clase es 1 y la distancia es positiva está mal clasificada
-      else {
-        if (distance > 0) {
-          solution$objective[[2]] <- solution$objective[[2]] + distance
-        }
-      }
-    }
-  }
-
-  return(solution)
-}
-
-
-
-#' @title Method to Calculate the FP/FN Objective
-#'
-#' @description
-#'   This method calculates the FP/FN objective by evaluating misclassified points.
-#'
-#' @param solution Solution class object containing data and features for classification
-#' @param data A data.frame with the input features
-#' @param output A vector with class labels
-#'
-#' @return Solution class object with the FP/FN objective calculated
-#'
-#' @export
-calculate_misclassified_objective <- function(solution, data, output) {
-  # Inicializar contadores de clasificaciones malas
   solution$objective[[3]] <- 0
   solution$objective[[4]] <- 0
 
+  # Initialize necessary lists to calculate metrics
+  y_true <- c()
+  y_pred <- c()
+  decision_scores <- c()
+
+
   # Iterar sobre todos los datos para calcular la suma de errores
   for (i in 1:nrow(data)) {
     clazz <- data[i, output]
+    y_true <- c(y_true, clazz) # Save actual class
     distance <- 0
     denominator <- 0
 
-    # Calculamos la distancia del vector a los planos d= wx + b/||w||
+    # Calculate the distance of the vector to the planes d = (wx + b)/||w||
     for (index in seq_along(solution$features)) {
       fea <- solution$features[[index]]
       distance <- distance + solution$plane_coord[index] * data[i, fea]
       denominator <- denominator + (solution$plane_coord[index] ** 2)
     }
 
-    # Ajustar por el término independiente y contar errores
-    # Si la clase es 1, la distancia se calcula con el plano b[0]
-    if (clazz == 1) {
-      distance <- distance + solution$plane_term_b[[1]]
+    # Decision function: f(x) = w·x + b
+    f_x <- distance + solution$plane_term_b[3]
+    if (f_x >= 0) {
+      pred <- 1
     } else {
+      pred <- -1
+    }
+    y_pred <- c(y_pred, pred)
+    decision_scores <- c(decision_scores, f_x)
+
+    # Adjust for the independent term and count errors
+    # If the class is 1, distance is calculated with plane b[2]
+    if (clazz == 1) {
       distance <- distance + solution$plane_term_b[[2]]
+    } else {
+      distance <- distance + solution$plane_term_b[[1]]
     }
 
     distance <- distance / denominator ** (1/2)
 
-    # Si b[0] < b[1], la clase 1 está por encima del plano y la clase -1 por debajo
-    if (solution$plane_term_b[[1]] < solution$plane_term_b[[2]]) {
-      # Si la clase es -1 y la distancia es positiva está mal clasificada
+    # If b[0] > b[1], class -1 is above the plane and class 1 below
+    if (solution$plane_term_b[[1]] > solution$plane_term_b[[2]]) {
+      # If class is -1 and distance is positive, it is misclassified
       if (clazz == -1) {
         if (distance > 0) {
           solution$objective[[4]] <- solution$objective[[4]] + 1
+          solution$objective[[2]] <- solution$objective[[2]] + distance
         }
       }
-      # Si la clase es 1 y la distancia es negativa está mal clasificada
+      # If class is 1 and distance is negative, it is misclassified
       else {
         if (distance < 0) {
           solution$objective[[3]] <- solution$objective[[3]] + 1
+          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
         }
       }
     }
-    # Si b[0] > b[1], la clase 1 está por encima del plano y la clase -1 por debajo
+    # If b[0] < b[1], class -1 is below the plane and class 1 above
     else {
-      # Si la clase es -1 y la distancia es negativa está mal clasificada
+      # If class is -1 and distance is negative, it is misclassified
       if (clazz == -1) {
         if (distance < 0) {
           solution$objective[[4]] <- solution$objective[[4]] + 1
+          solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
         }
       }
-      # Si la clase es 1 y la distancia es positiva está mal clasificada
+      # If class is 1 and distance is positive, it is misclassified
       else {
         if (distance > 0) {
           solution$objective[[3]] <- solution$objective[[3]] + 1
+          solution$objective[[2]] <- solution$objective[[2]] + distance
         }
       }
     }
   }
-
+  solution <- calculate_metrics(solution, y_true, y_pred, decision_scores)
   return(solution)
 }
 
-# calcular_objetivo_costes <- function(solucion) {
-#   solucion$obj_coste <- 0
-#   for (feature in solucion$features) {
-#     solucion$obj_coste <- solucion$obj_coste + solucion$costs[feature]
-#   }
-#   return(solucion)
-# }
 
+#' @title Calculate Classification Metrics
+#'
+#' @description
+#'   This function calculates common classification metrics including accuracy, precision,
+#'   recall, F1-score, Cohen's kappa, AUC, and the confusion matrix. The results are stored
+#'   as fields in the provided solution object.
+#'
+#' @param solution A solution class object where the metrics will be stored
+#' @param y_true A vector of true class labels (-1 or 1)
+#' @param y_pred A vector of predicted class labels (-1 or 1)
+#' @param decision_scores A numeric vector of decision scores (f(x) values)
+#'
+#' @return The input solution object with the following additional fields:
+#'   \item{conf_matrix}{Confusion matrix}
+#'   \item{accuracy}{Classification accuracy}
+#'   \item{precision}{Precision}
+#'   \item{recall}{Recall}
+#'   \item{f1}{F1 score}
+#'   \item{kappa}{Cohen's kappa statistic}
+#'   \item{auc}{Area Under the ROC Curve (AUC)}
+#'
+#' @export
+calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
+  y_true_bin <- ifelse(y_true == 1, 1, 0)
+  y_pred_bin <- ifelse(y_pred == 1, 1, 0)
+  # Confusion matrix
+  solution$conf_matrix <- table(factor(y_true, levels=c(-1,1)),
+                                factor(y_pred, levels=c(-1,1)))
+
+  # Accuracy
+  solution$accuracy <- Metrics::accuracy(y_true_bin, y_pred_bin)
+  # Precision, Recall, F1 (for positive class = 1)
+  solution$precision <- Metrics::precision(y_true_bin, y_pred_bin)
+  solution$recall <- Metrics::recall(y_true_bin, y_pred_bin)
+  solution$f1 <- ifelse(is.na(solution$precision) | is.na(solution$recall), 0, 2 * solution$precision * solution$recall / (solution$precision + solution$recall))
+
+  # Cohen Kappa
+  solution$kappa <- psych::cohen.kappa(solution$conf_matrix)$kappa
+
+  # AUC
+  solution$auc <- pROC::auc(y_true_bin, decision_scores)
+
+  return(solution)
+}
 
 
 #' @title Evaluate Solution
@@ -397,32 +387,21 @@ calculate_misclassified_objective <- function(solution, data, output) {
 #'
 #' @export
 evaluate_solution <- function(solution, data, output) {
-  # Verifica si la suma de plane_coord es cero
+  # Verify if the sum of plane_coord is zero
   if (sum(solution$plane_coord) == 0) {
-    cat("The solution cannot be evaluated, there are no coordinates.\n")
+    message("The solution cannot be evaluated, there are no coordinates.")
     solution$successful_evaluation <- FALSE
     return(solution)
   } else {
-    # Procedimientos para evaluar la solución si hay coordenadas válidas
+    # Procedures to evaluate the solution if there are valid coordinates
     solution <- construct_planes(solution, data)
 
-    # Calcular las funciones objetivo adecuadas
-    if (solution$obj_fn == "distance-epsilon" || solution$obj_fn == "distance-epsilon-costs") {
-      solution <- calculate_distance_objective(solution)
-      solution <- calculate_epsilon_objective(solution, data, output)
+    solution <- calculate_distance_objective(solution)
+    solution <- calculate_epsilon_objective(solution, data, output)
+    #solution <- calculate_misclassified_objective(solution, data, output)
 
-      if (solution$obj_fn == "distance-epsilon-costs") {
-        # TODO solution <- calculate_costs_objective(solution)
-      }
-    } else if (solution$obj_fn == "confusion-matrix" || solution$obj_fn == "confusion-matrix-costs") {
-      solution <- calculate_misclassified_objective(solution, data, output)
 
-      if (solution$obj_fn == "confusion-matrix-costs") {
-        # TODO solution <- calculate_costs_objective(solution)
-      }
-    }
-
-    # Asumir que las evaluaciones fueron exitosas si se alcanza este punto
+    # Assume evaluations were successful if this point is reached
     solution$successful_evaluation <- TRUE
     return(solution)
   }
@@ -443,11 +422,12 @@ evaluate_solution <- function(solution, data, output) {
 #' @export
 dominate <- function(solution1, solution2) {
   if (!is_valid_solution(solution1) || !is_valid_solution(solution2)) {
-    # Retorna FALSE o maneja el caso de forma que se ajuste a tu lógica de aplicación
+    # Return FALSE or handle the case as per your application logic
+
     return(FALSE)
   }
 
-  # Procede con la comparación si todos los valores son adecuados
+  # Proceed with comparison if all values are suitable
   if (solution1$obj_fn == 'distance-epsilon') {
     return(solution1$objective[[1]] >= solution2$objective[[1]] &&
              solution1$objective[[2]] <= solution2$objective[[2]])
@@ -455,6 +435,8 @@ dominate <- function(solution1, solution2) {
   } else if (solution1$obj_fn == 'confusion-matrix') {
     return(solution1$objective[[3]] <= solution2$objective[[3]] &&
              solution1$objective[[4]] <= solution2$objective[[4]])
+  }else{
+    return(FALSE)
   }
 }
 
@@ -487,6 +469,8 @@ is_valid_solution <- function(solution) {
 }
 
 
+
+
 #' @title Method to Determine Dominance with Three States
 #'
 #' @description
@@ -500,26 +484,27 @@ is_valid_solution <- function(solution) {
 #' @export
 dominate2 <- function(solution1, solution2) {
   if (solution1$obj_fn == 'distance-epsilon') {
-    # Comprobar si los objetivos son iguales
+
+    # Check if objectives are equal
     if (solution1$objective[[1]] == solution2$objective[[1]] &&
         solution1$objective[[2]] == solution2$objective[[2]]) {
-      return(0)  # No hay dominancia, son iguales
+      return(0)  # No dominance, they are equal
     } else if (solution1$objective[[1]] >= solution2$objective[[1]] &&
                solution1$objective[[2]] <= solution2$objective[[2]]) {
-      return(1)  # solucion1 domina a solucion2
+      return(1)  # solution1 dominates solution2
     } else {
-      return(2)  # solucion2 domina a solucion1
+      return(2)  # solution2 dominates solution1
     }
   } else if (solution1$obj_fn == 'confusion-matrix') {
-    # Comprobar si los objetivos son iguales
+    # Check if objectives are equal
     if (solution1$objective[[3]] == solution2$objective[[3]] &&
         solution1$objective[[4]] == solution2$objective[[4]]) {
-      return(0)  # No hay dominancia, son iguales
+      return(0)  # No dominance, they are equal
     } else if (solution1$objective[[3]] <= solution2$objective[[3]] &&
                solution1$objective[[4]] <= solution2$objective[[4]]) {
-      return(1)  # solucion1 domina a solucion2
+      return(1)  # solution1 dominates solution2
     } else {
-      return(2)  # solucion2 domina a solucion1
+      return(2)  # solution2 dominates solution1
     }
   }
 }
@@ -574,20 +559,20 @@ compare_solutions <- function(solution1, solution2) {
 #'
 #' @export
 mutate_vectors <- function(solution, data, output) {
-  # Obtener las clases únicas y ordenarlas
+  # Get unique classes and sort them
   classes <- sort(unique(data[[output]]))
 
-  # Iterar sobre cada clase
+  # Iterate over each class
   for (i in seq_along(classes)) {
-    # Llamar a get_class_vector para la clase actual
+    # Call get_class_vector for the current class
     vector <- get_class_vector(solution, classes[i], data, output)
 
-    # Verificar que el nuevo vector sea diferente al actual y si no, buscar otro
+    # Verify that the new vector is different from the current one; if not, find another
     while (identical(vector, solution$vectors[[i]])) {
       vector <- get_class_vector(solution, classes[i], data, output)
     }
 
-    # Actualizar el vector en la solución
+    # Update the vector in the solution
     solution$vectors[[i]] <- vector
   }
 
