@@ -417,7 +417,7 @@ evaluate_solution <- function(solution, data, output) {
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
 #'
-#' @return TRUE if solucion1 dominates solucion2, otherwise FALSE
+#' @return TRUE if solution1 dominates solution2, otherwise FALSE
 #'
 #' @export
 dominate <- function(solution1, solution2) {
@@ -479,7 +479,7 @@ is_valid_solution <- function(solution) {
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
 #'
-#' @return 0 if the solutions are equal, 1 if solucion1 dominates solucion2, 2 if solucion2 dominates solucion1
+#' @return 0 if the solutions are equal, 1 if solution1 dominates solution2, 2 if solution2 dominates solution1
 #'
 #' @export
 dominate2 <- function(solution1, solution2) {

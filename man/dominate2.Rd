@@ -12,7 +12,7 @@ dominate2(solution1, solution2)
 \item{solution2}{Second solution object}
 }
 \value{
-0 if the solutions are equal, 1 if solucion1 dominates solucion2, 2 if solucion2 dominates solucion1
+0 if the solutions are equal, 1 if solution1 dominates solution2, 2 if solution2 dominates solution1
 }
 \description{
 This function determines the dominance state between two solutions.

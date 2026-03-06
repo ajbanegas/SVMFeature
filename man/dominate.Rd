@@ -12,7 +12,7 @@ dominate(solution1, solution2)
 \item{solution2}{Second solution object}
 }
 \value{
-TRUE if solucion1 dominates solucion2, otherwise FALSE
+TRUE if solution1 dominates solution2, otherwise FALSE
 }
 \description{
 This function determines if one solution dominates another based on objectives.
