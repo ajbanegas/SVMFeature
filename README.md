@@ -1,8 +1,7 @@
-# 🧠 SVMFeature: Multi-objective SVM Classifier with Feature Selection
+# 🧠 SVMFeature: Multiobjective SVMs with Feature Selection via NSGA-II
 
-`SVMFeature` is an R package that implements the algorithms proposed by Valero et al. (2023) and Alcaraz, J. (2024). It provides a metaheuristic approach to solve the **soft-margin Support Vector Machine (SVM)** problem combined with **Feature Selection**.
-
-The result of the algorithm is a **Pareto front**, where each solution is an SVM-based classifier, allowing decision-makers to select the optimal model based on their specific trade-offs between accuracy and complexity.
+`SVMFeature` is an R package for solving the multiobjective soft-margin support vector machine with feature selection problem. 
+The current version implements an NSGA-II-based metaheuristic for Pareto frontier approximation, together with tools for model assessment, visualization, and reproducible computational experiments.
 
 ---
 
