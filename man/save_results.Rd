@@ -4,14 +4,19 @@
 \alias{save_results}
 \title{Save the Pareto front results to a CSV file}
 \usage{
-save_results(object, output_dir = "results", dataset_name = "dataset")
+save_results(object, output_dir, dataset_name = "dataset")
 }
 \arguments{
 \item{object}{An object of class "SVMFeature".}
 
-\item{output_dir}{Character. The directory to save the results (default: "results").}
+\item{output_dir}{Character. The directory to save the results.
+This argument must be supplied explicitly.}
 
 \item{dataset_name}{Character. The name of the dataset (default: "dataset").}
+}
+\value{
+A character string with the path to the saved file.
+This value indicates where the results were written.
 }
 \description{
 Save the Pareto front results to a CSV file

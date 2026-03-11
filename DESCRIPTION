@@ -1,9 +1,9 @@
 Package: SVMFeature
 Type: Package
 Language: en-US
-Title: Multiobjective SVMs with Feature Selection via NSGA-II
+Title: Multiobjective Feature Selection Tools for Support Vector Machines
 Version: 0.1.0
-Description: An R package for solving the multiobjective soft-margin support vector machine with feature selection problem. The current version implements an NSGA-II-based metaheuristic for Pareto frontier approximation, together with tools for model assessment, visualization, and reproducible computational experiments.
+Description: Provides tools for feature selection in support vector machine models using the Non-dominated Sorting Genetic Algorithm II (NSGA-II). The package includes utilities for preprocessing, representation of candidate solutions, and multi-objective optimization of feature subsets for classification tasks. The implemented optimization strategy is based on Deb et al. (2002) <doi:10.1109/4235.996017>, and adapted by Alcaraz (2024) <doi:10.1016/j.cor.2024.106821> and Valero-Carreras et al. (2023) <doi:10.1016/j.cor.2022.106131>.
 License: AGPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.3.2
